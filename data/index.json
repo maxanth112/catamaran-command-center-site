@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "boats": [
+    "data/boats/boats-01.json",
+    "data/boats/boats-02.json",
+    "data/boats/boats-03.json",
+    "data/boats/boats-04.json",
+    "data/boats/boats-05.json",
+    "data/boats/boats-06.json",
+    "data/boats/boats-07.json",
+    "data/boats/boats-08.json"
+  ],
+  "conversations": [
+    "data/conversations/conversations-01.json",
+    "data/conversations/conversations-02.json",
+    "data/conversations/conversations-03.json"
+  ],
+  "manifest": "data/manifest.json"
+}

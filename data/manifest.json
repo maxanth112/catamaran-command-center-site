@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-03T12:36:00-07:00",
+  "canonical_store": "GitHub repository data/*.json",
+  "boats": 56,
+  "conversation_events": 29,
+  "notes": "Google Sheets retired. Canonical seed retained from the Sep 3 tracker migration and Gmail diligence; all future changes are committed directly to GitHub."
+}

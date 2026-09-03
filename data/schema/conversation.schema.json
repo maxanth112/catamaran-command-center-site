@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "conversation.schema.json",
+  "title": "ConversationEvent",
+  "type": "object",
+  "required": ["id", "boat_id", "thread_label", "date", "sender", "subject", "facts", "triage", "next_action", "priority", "gmail_message_id", "gmail_url"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "boat_id": {"type": ["string", "null"]},
+    "thread_label": {"type": "string"},
+    "date": {"type": "string"},
+    "sender": {"type": "string"},
+    "subject": {"type": "string"},
+    "availability": {"type": "string"},
+    "facts": {"type": "string"},
+    "triage": {"type": "string"},
+    "next_action": {"type": "string"},
+    "priority": {"type": "string", "enum": ["P1", "P2", "P3", "P4"]},
+    "gmail_message_id": {"type": "string"},
+    "gmail_url": {"type": "string"}
+  },
+  "additionalProperties": false
+}
