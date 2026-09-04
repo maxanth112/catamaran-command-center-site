@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-04T10:36:00-07:00",
+  "scope": "Active high-priority boats plus document-rich diligence candidates. Separates equipment presence, age/condition, evidence status and unresolved unknowns.",
+  "shards": [
+    "data/enrichment/enrichment-01.json",
+    "data/enrichment/enrichment-02.json",
+    "data/enrichment/enrichment-03.json",
+    "data/enrichment/enrichment-04.json",
+    "data/enrichment/enrichment-05.json",
+    "data/enrichment/enrichment-06.json"
+  ],
+  "boat_count": 22,
+  "system_categories": ["battery", "solar_charging", "sails_rig", "engines_drives", "generator", "climate", "water", "structure", "survey_docs", "tax_title"],
+  "status_values": ["documented", "survey", "owner_reported", "broker_confirmed", "listing", "mixed", "pending", "unknown"]
+}
