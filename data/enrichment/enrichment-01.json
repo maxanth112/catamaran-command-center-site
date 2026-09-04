@@ -1,0 +1,97 @@
+[
+  {
+    "boat_id": "orana-44-new-engines",
+    "reviewed_at": "2026-09-04",
+    "completeness": 84,
+    "evidence_level": "listing",
+    "systems": {
+      "battery": {"summary": "900Ah LiFePO₄ bank", "status": "listing", "chemistry": "LiFePO4", "capacity_ah": 900, "year": 2024, "condition": "Age reported as 2024/25 electrical upgrade; no load/capacity test supplied."},
+      "solar_charging": {"summary": "2,000W solar; Victron MultiPlus II 3000/12, Cerbo GX, 4 MPPTs, Orion DC-DC, SmartShunt", "status": "listing", "solar_w": 2000, "inverter_va": 3000},
+      "sails_rig": {"summary": "New mainsail 2025; running rigging 2024; complete rig check June 2026. Genoa age not cleanly stated.", "status": "mixed", "mainsail_year": 2025, "standing_rig_condition": "Rig check completed June 2026; replacement age unknown."},
+      "engines_drives": {"summary": "Twin Beta Marine 40hp engines and new saildrives installed 2025; ~300h; 5-year warranty", "status": "listing", "engine_hours_port": 300, "engine_hours_starboard": 300, "engine_year": 2025, "saildrive_year": 2025},
+      "generator": {"summary": "Generator listed onboard; model/hours not disclosed", "status": "unknown"},
+      "climate": {"summary": "A/C and heating in all cabins and saloon", "status": "listing"},
+      "water": {"summary": "Aquabase 60 L/h watermaker fully overhauled 2025 with warranty", "status": "listing", "watermaker_lph": 60, "watermaker_service_year": 2025},
+      "structure": {"summary": "Barrier Shield + Coppercoat 2023; rudder bearings 2023; never-chartered claim", "status": "listing"},
+      "survey_docs": {"summary": "Latest survey disclosed as 2022; rig check June 2026", "status": "listing", "survey_year": 2022},
+      "tax_title": {"summary": "EU VAT paid", "status": "listing"}
+    },
+    "unknowns": ["Standing-rigging replacement date", "Genoa manufacture/condition", "Generator model/hours/service history", "2022 survey copy"]
+  },
+  {
+    "boat_id": "island-time",
+    "reviewed_at": "2026-09-04",
+    "completeness": 88,
+    "evidence_level": "owner_email",
+    "systems": {
+      "battery": {"summary": "10×100Ah Dragonfly lithium = 1,000Ah; professionally installed with copper bus bars", "status": "owner_reported", "chemistry": "LiFePO4", "capacity_ah": 1000, "condition": "Owner says charging normally; no formal capacity test provided."},
+      "solar_charging": {"summary": "6×320W SunPower = 1,920W; Victron MultiPlus 3000/12/120; 150/70 + 100/50 MPPTs plus spare 75/15", "status": "owner_reported", "solar_w": 1920, "inverter_va": 3000},
+      "sails_rig": {"summary": "Standing rigging redone and mast comprehensively overhauled. Main believed 2019 and owner says good shape/stitching; newer Doyle jib inspected by sail loft Jan 2026 and reported great.", "status": "owner_reported", "mainsail_year": 2019, "standing_rig_condition": "Redone; exact replacement date/invoice pending.", "headsail_condition": "Great per owner after Jan 2026 loft inspection."},
+      "engines_drives": {"summary": "Full Yanmar engine repower by Just Cats; current ~940/1,050h. Owner clarifies this was voluntary for reliability, NOT a recall. Serviced every 250h.", "status": "owner_reported", "engine_hours_port": 940, "engine_hours_starboard": 1050, "engine_year": 2024},
+      "generator": {"summary": "Generator used only a couple hundred hours over three cruising seasons, per owner; exact model/current hours pending", "status": "owner_reported"},
+      "climate": {"summary": "Frigomar variable-speed DC-inverter A/C. Owner estimates 600–800W normal draw; night-mode scenario about 300Ah over 6h; real-world system ran weeks with little generator use.", "status": "owner_reported"},
+      "water": {"summary": "Watermaker working at end of cruising season and pickled afterward; exact output/service docs pending", "status": "owner_reported"},
+      "structure": {"summary": "Owner reports no evidence of serious prior repairs; rudder bearings recently replaced; ex-Moorings Belize hull", "status": "owner_reported"},
+      "survey_docs": {"summary": "Major Just Cats/Yanmar/rig invoices and recent survey requested but not yet received", "status": "pending"},
+      "tax_title": {"summary": "US transaction/title details not yet fully reconciled", "status": "unknown"}
+    },
+    "unknowns": ["Exact standing-rigging date/invoice", "Repower work order and saildrive scope", "Recent survey", "Exact generator model/hours", "Formal battery capacity test"]
+  },
+  {
+    "boat_id": "kostenfalle",
+    "reviewed_at": "2026-09-04",
+    "completeness": 94,
+    "evidence_level": "documented",
+    "systems": {
+      "battery": {"summary": "4× CHINS 12V 300Ah LiFePO₄ = 1,200Ah, purchased Sep. 2021; each has built-in 200A BMS", "status": "documented", "chemistry": "LiFePO4", "capacity_ah": 1200, "year": 2021, "condition": "Seller reports no observed degradation; no formal capacity test."},
+      "solar_charging": {"summary": "Documented purchase: 3×450W LONGi + 1×370W REC = 1,720W; dual Victron SmartSolar 150/85 controllers; dual Victron MultiPlus 3000-class system", "status": "documented", "solar_w": 1720, "inverter_va": 3000},
+      "sails_rig": {"summary": "Standing/running rigging renewed 2021. Calvert headsail paid Nov. 2025; current listing identifies 2026 genoa. Main age/condition still needs confirmation.", "status": "mixed", "standing_rig_year": 2021, "headsail_year": 2025},
+      "engines_drives": {"summary": "Volvo D2-75 engines + saildrives installed during 2021 refit, ~900h. Owner oil/filter changes at 50/250/500/750h. Diaphragm/seal replacement date still unanswered.", "status": "owner_reported", "engine_hours_port": 900, "engine_hours_starboard": 900, "engine_year": 2021, "saildrive_year": 2021},
+      "generator": {"summary": "Fischer Panda bought used at 2,637.6h after authorized service; seller believes current just over 2,700h", "status": "owner_reported", "generator_hours": 2700},
+      "climate": {"summary": "A/C can theoretically run from inverter/lithium; owners never actually ran A/C from batteries, so overnight endurance is unproven", "status": "owner_reported"},
+      "water": {"summary": "~40 GPH watermaker", "status": "listing", "watermaker_gph": 40},
+      "structure": {"summary": "2025 crossbeam replacement documented as an open diligence question; seller says 2021 refit was age/cruising-driven, not casualty-driven. Ex-Belize charter hull.", "status": "mixed"},
+      "survey_docs": {"summary": "2021 survey + major receipt stack received; no recent survey or oil analysis", "status": "documented", "survey_year": 2021},
+      "tax_title": {"summary": "US-located; title/import specifics not materialized in current file", "status": "unknown"}
+    },
+    "unknowns": ["2025 crossbeam replacement cause", "Saildrive diaphragm/seal replacement date", "Main sail age/condition", "Current survey/oil analysis"]
+  },
+  {
+    "boat_id": "squid-attack",
+    "reviewed_at": "2026-09-04",
+    "completeness": 96,
+    "evidence_level": "documented",
+    "systems": {
+      "battery": {"summary": "4× Fullriver AGM DC210-12 installed Nov. 2021; maintenance log load-tested house bank 'all good' Nov. 2025", "status": "documented", "chemistry": "AGM", "year": 2021, "condition": "Load test good Nov. 2025; aging AGM bank remains a replacement-horizon item."},
+      "solar_charging": {"summary": "No solar disclosed. 2,500W inverter; 100A shore charging (60+40), +25A while generator runs; twin 80A alternators", "status": "broker_confirmed", "solar_w": 0, "inverter_w": 2500},
+      "sails_rig": {"summary": "Original standing rigging; broker calls it great condition. New Doyle Coastal Plus mainsail Nov. 2024. Jib removed for Doyle repair Nov. 2025.", "status": "documented", "mainsail_year": 2024, "standing_rig_year": 2021, "standing_rig_condition": "Original; broker says great condition."},
+      "engines_drives": {"summary": "~1,650h Yanmars. Saildrives serviced every 250h and annually out of water; maintenance log is extensive.", "status": "documented", "engine_hours_port": 1663, "engine_hours_starboard": 1646},
+      "generator": {"summary": "9kW-class genset at 8,809h; logged routine service, but June 2026 maintenance includes troubleshooting generator high-temperature shutdowns", "status": "documented", "generator_hours": 8809, "condition": "High-hour unit with June 2026 high-temp shutdown troubleshooting—resolution should be confirmed."},
+      "climate": {"summary": "Full A/C onboard; no battery-running claim. Electrical system is AGM/no-solar, so generator is the practical A/C energy source.", "status": "mixed"},
+      "water": {"summary": "Rainman 37 GPH with carbon-filtered backflush; tested Feb. 2026 and pickled July 2026", "status": "documented", "watermaker_gph": 37},
+      "structure": {"summary": "Factory Lagoon bulkhead modification plus extra local reinforcement; compression-post inspections with Lagoon. No significant structural claims reported.", "status": "broker_confirmed"},
+      "survey_docs": {"summary": "Full TMM maintenance file 2020–Sep 2026 received; no independent current buyer survey yet", "status": "documented"},
+      "tax_title": {"summary": "Tax not paid", "status": "listing"}
+    },
+    "unknowns": ["Standing-rig remaining-life assessment", "Resolution of June 2026 generator high-temp shutdowns", "Independent survey/moisture findings", "Battery replacement planning"]
+  },
+  {
+    "boat_id": "macera",
+    "reviewed_at": "2026-09-04",
+    "completeness": 97,
+    "evidence_level": "documented",
+    "systems": {
+      "battery": {"summary": "Owner-built ~1,200Ah lithium bank; unknown cell manufacturer/BMS; 400A Class D fuse; not inspected by marine electrician or specifically insurer-accepted", "status": "documented", "chemistry": "LiFePO4", "capacity_ah": 1200, "condition": "Functional owner-built bank; installation/insurance acceptance is a material diligence item."},
+      "solar_charging": {"summary": "2,435W solar; Magnum 230V inverter/charger (~2,700W, 125A charging) plus Victron 110V inverter/charger", "status": "documented", "solar_w": 2435, "inverter_w": 2700},
+      "sails_rig": {"summary": "Standing rigging renewed 2022 from chainplates upward except dolphin striker; chainplates inspected, mast step/compression structure not separately inspected. Original Hydranet sails estimated ~70% condition.", "status": "documented", "standing_rig_year": 2022, "mainsail_year": 2008, "headsail_year": 2008, "sails_condition": "Owner estimates ~70%."},
+      "engines_drives": {"summary": "Yanmar 4JH4-TEs substantially rebuilt 2021/22; current 4,082h port / 3,341h starboard, owner estimates ~1,000/~500h since rebuild. Two new SD60 saildrives supplied 2022.", "status": "documented", "engine_hours_port": 4082, "engine_hours_starboard": 3341, "saildrive_year": 2022},
+      "generator": {"summary": "Mase Mariner 1020 B 9.5kW, ~2,836h; owner reports oil every 200h and routine service", "status": "owner_reported", "generator_hours": 2836, "generator_kw": 9.5},
+      "climate": {"summary": "4 of 5 A/C units operational; one requires service/repair", "status": "owner_reported"},
+      "water": {"summary": "Original Sea Recovery watermaker + secondary 12V Village Marine; replacement membranes for secondary await collection/installation", "status": "owner_reported"},
+      "structure": {"summary": "Coin-sized blisters repaired with West System epoxy; one light sand contact at San Andrés; port-hull coating adhesion failure after 2025 bottom work; a few hatches drip slightly. No reported collision/storm/lightning/major insurance loss.", "status": "mixed"},
+      "survey_docs": {"summary": "Unusually strong refit document package, but no current independent survey/moisture report", "status": "documented"},
+      "tax_title": {"summary": "Tax not paid", "status": "listing"}
+    },
+    "unknowns": ["Independent current survey/moisture assessment", "BMS/cell make and electrical-insurance acceptance", "Port-hull coating repair completion", "One A/C repair", "Current sail condition by loft/rigger"]
+  }
+]
