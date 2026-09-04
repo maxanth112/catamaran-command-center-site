@@ -1,0 +1,21 @@
+[
+  {
+    "boat_id": "palma-lagoon-42",
+    "reviewed_at": "2026-09-04",
+    "completeness": 62,
+    "evidence_level": "listing",
+    "systems": {
+      "battery": {"summary": "Battery chemistry/capacity not published in current Navigare listing; equipment package available on demand", "status": "unknown"},
+      "solar_charging": {"summary": "Solar/inverter specs not published in current Navigare listing; equipment package available on demand", "status": "unknown"},
+      "sails_rig": {"summary": "New square-top mainsail 2026, headsail 2025, 88m² Aramid Code 0 on Selden C45 furler; standing-rig age not published", "status": "listing", "mainsail_year": 2026, "headsail_year": 2025},
+      "engines_drives": {"summary": "Twin Yanmar 57hp; prior syndicated listing showed ~4,104h, but current Navigare page reviewed does not expose a fresh hour reading", "status": "mixed", "engine_hours_port": 4104, "engine_hours_starboard": 4104},
+      "generator": {"summary": "Generator details not published on current Navigare page", "status": "unknown"},
+      "climate": {"summary": "Webasto EVO 55 heating disclosed; A/C not stated on current Navigare page", "status": "listing"},
+      "water": {"summary": "Watermaker status not stated on current Navigare page", "status": "unknown"},
+      "structure": {"summary": "General condition listed Good; charter/fleet history requires phase-out/damage file", "status": "listing"},
+      "survey_docs": {"summary": "Sale subject to survey; maintenance/equipment package requested but not yet received", "status": "pending"},
+      "tax_title": {"summary": "€269,000 excl. VAT; Spanish flag", "status": "listing"}
+    },
+    "unknowns": ["Battery/solar/inverter/generator/A-C/watermaker package", "Standing rig age", "Current engine hours and saildrive service", "Phase-out/damage history", "Survey"]
+  }
+]
