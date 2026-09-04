@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-09-03T22:27:49-07:00",
+  "generated_at": "2026-09-03T22:34:34-07:00",
   "canonical_store": "GitHub repository data/*.json",
   "boats": 62,
   "conversation_events": 35,
-  "notes": "Google Sheets retired. Full 62-boat canonical-data audit completed Sep 3 evening; Gmail re-reconciled through 20:55 PT. Schema v2 adds listing-date provenance, precision, confidence, and historical market-end dates for every boat. The dashboard calculates days on market at runtime and stops closed comps at their recorded market-end date. Research distinguishes six verified dates, 42 earliest-public-evidence dates, and 14 month-level estimates; none are left unknown. All future changes remain committed directly to GitHub."
+  "notes": "Google Sheets retired. Full 62-boat canonical-data audit completed Sep 3 evening; Gmail re-reconciled through 20:55 PT. Schema v2 adds listing-date provenance, precision, confidence, and historical market-end dates for every boat. The dashboard calculates days on market at runtime and stops closed comps at their recorded market-end date. Research distinguishes six verified dates, 41 earliest-public-evidence dates, 14 month-level estimates, and one unknown date where no vessel-specific public archive remains. All future changes remain committed directly to GitHub."
 }
