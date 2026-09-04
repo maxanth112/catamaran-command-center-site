@@ -1,0 +1,6 @@
+/* All decision surfaces are normalized to USD at runtime. Native broker currency remains in source metadata. */
+label:has(> #currency),
+.chart-controls.segmented,
+.inline-controls > .segmented {
+  display: none !important;
+}
