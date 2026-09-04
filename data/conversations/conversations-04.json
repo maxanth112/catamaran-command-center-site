@@ -58,5 +58,35 @@
     "priority": "P1",
     "gmail_message_id": "1a06a145b1387942",
     "gmail_url": "https://mail.google.com/mail/u/0/#all/1a06a145b1387942"
+  },
+  {
+    "id": "fresh-11",
+    "boat_id": "blue-pearl-too",
+    "thread_label": "Blue Pearl Too",
+    "date": "2026-09-02",
+    "sender": "Max Wiesner",
+    "subject": "Blue Pearl Too – records before a call",
+    "availability": "Outbound records-first follow-up",
+    "facts": "Max told Chris email is easiest and asked to review records before a call. Requested standing-rig/sail ages, engine and saildrive history including the 2025 seal work, generator details, lithium/solar/Victron documentation, recent survey and casualty/structural history; also asked about practical 220V/50Hz implications and seller flexibility.",
+    "triage": "Removes the stale 'reply now' state; the broker now owes the technical records or a substantive email response.",
+    "next_action": "Wait for Chris to reply with records/details. No call or travel commitment is needed yet.",
+    "priority": "P1",
+    "gmail_message_id": "1a062f2628f81bd1",
+    "gmail_url": "https://mail.google.com/mail/u/0/#all/1a062f2628f81bd1"
+  },
+  {
+    "id": "fresh-12",
+    "boat_id": "island-time",
+    "thread_label": "Island Time",
+    "date": "2026-09-02",
+    "sender": "Max Wiesner",
+    "subject": "Re: Island Time – a few questions on the 2024–25 refit",
+    "availability": "Outbound records-first follow-up",
+    "facts": "Max asked Amanda/owner for the key Just Cats/Yanmar engine and SD60 recall/replacement and warranty documents, standing-rigging work, any recent survey, exact lithium/inverter setup and real A/C battery endurance. He explicitly said a giant binder is unnecessary and that he is happy to set up a call after reviewing the major records.",
+    "triage": "Corrects the older correspondence note that said no response was sent. The next move is with the broker/owner to provide documentation, not with Max.",
+    "next_action": "Wait for the promised major invoices/survey and owner details; then Max decides whether a call or viewing is worthwhile.",
+    "priority": "P1",
+    "gmail_message_id": "1a063091f17627bd",
+    "gmail_url": "https://mail.google.com/mail/u/0/#all/1a063091f17627bd"
   }
 ]
