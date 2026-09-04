@@ -2,7 +2,7 @@
   "schema_version": 1,
   "generated_at": "2026-09-03T18:39:00-07:00",
   "canonical_store": "GitHub repository data/*.json",
-  "boats": 56,
+  "boats": 62,
   "conversation_events": 33,
-  "notes": "Google Sheets retired. Gmail reconciled through Sep 3 evening: added Bound for Freedom and Kostenfalle correspondence, including seller/refit records and the narrow Kostenfalle technical follow-up. All future changes are committed directly to GitHub."
+  "notes": "Google Sheets retired. Gmail reconciled through Sep 3 evening. Added a dedicated performance-liveaboard market pass covering Nautitech 46 Open, Catana 42/471, Seawind 1160 and older Outremer 45 opportunities. All future changes are committed directly to GitHub."
 }
