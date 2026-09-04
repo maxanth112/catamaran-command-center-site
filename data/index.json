@@ -13,7 +13,8 @@
   "conversations": [
     "data/conversations/conversations-01.json",
     "data/conversations/conversations-02.json",
-    "data/conversations/conversations-03.json"
+    "data/conversations/conversations-03.json",
+    "data/conversations/conversations-04.json"
   ],
   "manifest": "data/manifest.json"
 }

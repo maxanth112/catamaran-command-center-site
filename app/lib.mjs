@@ -19,6 +19,47 @@ const LENGTH_RULES = [
   [40, /(?:lagoon\s*400|lagoon\s*40\b)/i],
 ];
 
+// Presentation-only map coordinates. These deliberately stay outside the
+// canonical boat schema: they locate the named marina/area conservatively and
+// should not be read as the vessel's exact position.
+const LOCATION_RULES = [
+  [/kemah|texas|\btx\b/i, [29.54, -95.02]],
+  [/charleston|south carolina|\bsc\b/i, [32.78, -79.93]],
+  [/st\.? augustine/i, [29.90, -81.31]],
+  [/daytona/i, [29.21, -81.02]],
+  [/riviera beach/i, [26.78, -80.06]],
+  [/^panama\b/i, [9.00, -79.52]],
+  [/fort lauderdale|dania beach/i, [26.12, -80.14]],
+  [/marsh harbour|abaco|bahama/i, [26.54, -77.06]],
+  [/luper[oó]n/i, [19.90, -70.96]],
+  [/la romana/i, [18.43, -68.97]],
+  [/fajardo|puerto rico/i, [18.33, -65.65]],
+  [/st\.? thomas/i, [18.34, -64.93]],
+  [/cruz bay|st\.? john|usvi/i, [18.33, -64.79]],
+  [/hodge creek/i, [18.43, -64.57]],
+  [/road town|tortola|virgin gorda|\bbvi\b/i, [18.43, -64.62]],
+  [/simpson bay|sint maarten/i, [18.04, -63.09]],
+  [/saint lucia|st\.? lucia/i, [13.91, -60.98]],
+  [/le marin|martinique/i, [14.47, -60.87]],
+  [/saint david|st\.? george|grenada|port louis/i, [12.05, -61.75]],
+  [/chaguaramas|trinidad/i, [10.68, -61.64]],
+  [/willemstad|cura[cç]ao/i, [12.11, -68.93]],
+  [/aruba/i, [12.52, -70.04]],
+  [/placencia|belize/i, [16.52, -88.37]],
+  [/rio dulce|guatemala/i, [15.66, -88.99]],
+  [/nargan[aá]|san blas/i, [9.45, -78.58]],
+  [/panama/i, [9.00, -79.52]],
+  [/palma|baleares/i, [39.57, 2.65]],
+  [/barcelona/i, [41.39, 2.17]],
+  [/le lavandou/i, [43.14, 6.37]],
+  [/marseille/i, [43.30, 5.37]],
+  [/palermo|sicily/i, [38.12, 13.36]],
+  [/seget|croatia/i, [43.52, 16.23]],
+  [/tivat|montenegro/i, [42.43, 18.70]],
+  [/lefkada|greece/i, [38.83, 20.71]],
+  [/larnaca|cyprus/i, [34.90, 33.62]],
+];
+
 export const STAGE_LABELS = {
   diligence: 'Broker replied — needs review',
   waiting: 'Waiting on broker',
@@ -151,6 +192,11 @@ export function regionFor(boat) {
   if (/spain|france|italy|cyprus|croatia|greece|barcelona|palermo|marseille|montenegro/.test(value)) return 'Mediterranean';
   if (/florida|texas|maryland|annapolis|charleston|daytona|riviera beach|st\. augustine|fort lauderdale/.test(value)) return 'Continental US';
   return 'Other';
+}
+
+export function locationCoordinates(location = '') {
+  const match = LOCATION_RULES.find(([pattern]) => pattern.test(location));
+  return match ? { lat: match[1][0], lon: match[1][1] } : null;
 }
 
 export function latestConversation(boatId, conversations) {

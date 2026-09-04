@@ -1,0 +1,62 @@
+[
+  {
+    "id": "fresh-7",
+    "boat_id": "bound-for-freedom",
+    "thread_label": "Bound for Freedom",
+    "date": "2026-09-03",
+    "sender": "Caroline Laviolette",
+    "subject": "Re: Bound for Freedom – serious interest / refit diligence",
+    "availability": "Available; broker requests call before releasing more records",
+    "facts": "Broker supplied the A/C quote/specs and says the 2026 lithium bank was designed with a future A/C installation in mind. Seller reports no known material damage and no hurricane history; boat spent most of its life in the Mediterranean. Replacement jib quote is about $6k. Vessel has not been imported into the USA and current tariffs make importation expensive. Broker wants a phone conversation before spending time redacting additional records.",
+    "triage": "Still a strong boat, but the remaining record set and US-buyer transaction path are now gated behind a real buyer conversation. This is a Max decision rather than an automated follow-up.",
+    "next_action": "YOUR DECISION: choose whether to take Caroline's call. Do not schedule or send travel/offer language automatically. If proceeding, use the call to unlock rig/survey records and clarify import/tariff structure and seller flexibility.",
+    "priority": "P1",
+    "gmail_message_id": "1a0688c9e15f2450",
+    "gmail_url": "https://mail.google.com/mail/u/0/#all/1a0688c9e15f2450"
+  },
+  {
+    "id": "fresh-8",
+    "boat_id": "kostenfalle",
+    "thread_label": "Kostenfalle",
+    "date": "2026-09-03",
+    "sender": "Will Miller",
+    "subject": "Re: Kostenfalle – refit documentation / serious buyer",
+    "availability": "Available; sellers motivated",
+    "facts": "Will sold the boat to the current owners in 2021, when their refit began. He reports no damage disclosures. The boat exited a Belize charter fleet, then became a liveaboard cruiser. No recent survey or oil-analysis report exists. Sellers are off the boat for hurricane season; boat remains in the water and available. Broker says it is priced aggressively, sellers want it sold, and he expects a clean deal within roughly 10–12% of the current ask.",
+    "triage": "Strengthened value case and seller motivation, but current-condition evidence still relies on older records until a new survey/mechanical inspection is commissioned.",
+    "next_action": "Wait for the seller's detailed refit answers and records; no showing/call required yet.",
+    "priority": "P1",
+    "gmail_message_id": "1a068cf31c181c2a",
+    "gmail_url": "https://mail.google.com/mail/u/0/#all/1a068cf31c181c2a"
+  },
+  {
+    "id": "fresh-9",
+    "boat_id": "kostenfalle",
+    "thread_label": "Kostenfalle",
+    "date": "2026-09-03",
+    "sender": "Will Miller / seller",
+    "subject": "Fwd: Questions",
+    "availability": "Available; 2021 survey and major refit receipts supplied",
+    "facts": "Seller says the 2021 refit was driven by 13 years of Caribbean use and a desire for a trusted cruising baseline; original engines and saildrives showed traces of water in the oil. Seller supplied receipts for major work plus a 2021 survey and reports no known casualty-driven reason for the refit. Engine oil/filter changes were owner-performed at 50/250/500/750h. The 2021 lithium bank shows no observed degradation, but the owners never actually ran A/C from batteries, so overnight A/C capability remains theoretical. Fischer Panda was purchased used at 2,637.6h after authorized service and is believed to have only a little over 2,700h now, materially lower than the prior ~3,000h estimate.",
+    "triage": "Material upgrade in documentation quality. Kostenfalle now has one of the better 'prior owner paid the refit' files, but it still needs current survey/mechanical evidence and clarification of saildrive diaphragm/seal age and the reason for the 2025 crossbeam replacement.",
+    "next_action": "Technical follow-up sent only for saildrive diaphragm/seal replacement date and the cause of the 2025 crossbeam replacement. No call, showing, travel or offer requested.",
+    "priority": "P1",
+    "gmail_message_id": "1a0692796b6356a5",
+    "gmail_url": "https://mail.google.com/mail/u/0/#all/1a0692796b6356a5"
+  },
+  {
+    "id": "fresh-10",
+    "boat_id": "kostenfalle",
+    "thread_label": "Kostenfalle",
+    "date": "2026-09-03",
+    "sender": "Max Wiesner",
+    "subject": "Re: Kostenfalle – refit documentation / serious buyer",
+    "availability": "Outbound diligence follow-up",
+    "facts": "Sent a narrow technical follow-up asking when the saildrive diaphragms/shaft seals were last replaced and whether the 2025 crossbeam replacement was preventative/age-related or prompted by cracking, movement, deformation or another structural finding. Explicitly said no showing or call is needed yet.",
+    "triage": "Appropriate low-risk diligence follow-up; no purchase-stage commitment created.",
+    "next_action": "Wait for Will/seller response.",
+    "priority": "P1",
+    "gmail_message_id": "1a06a145b1387942",
+    "gmail_url": "https://mail.google.com/mail/u/0/#all/1a06a145b1387942"
+  }
+]

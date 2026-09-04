@@ -14,6 +14,7 @@ import {
   inferCurrency,
   isSeriousCandidate,
   latestConversation,
+  locationCoordinates,
   median,
   money,
   preciseStatus,
@@ -24,8 +25,8 @@ import {
   relativeValueRank,
   riskItems,
   sortBoats,
-} from './lib.mjs';
-import { sailingMethodology, sailingProfile } from './model-insights.mjs';
+} from './lib.mjs?v=20260903.6';
+import { sailingMethodology, sailingProfile } from './model-insights.mjs?v=20260903.6';
 
 const ROUTES = [
   ['overview', 'Overview'],
@@ -132,11 +133,11 @@ function shell(content) {
     <header class="app-header">
       <a class="brand-lockup" href="#overview" aria-label="Catamaran Command Center overview">
         <span class="brand-mark" aria-hidden="true">CC</span>
-        <span><strong>Catamaran Command Center</strong><small>Acquisition intelligence</small></span>
+        <span><strong>Catamaran Command Center</strong></span>
       </a>
       <div class="data-freshness" title="Canonical data is loaded directly from version-controlled JSON">
         <span class="freshness-dot" aria-hidden="true"></span>
-        <span><strong>Canonical data live</strong><small>${manifest.boats} boats · ${manifest.conversation_events} events · refreshed ${updated}</small></span>
+        <span>${manifest.boats} boats · ${manifest.conversation_events} events · updated ${updated}</span>
       </div>
     </header>
     ${nav()}
@@ -146,8 +147,8 @@ function shell(content) {
   </div>`;
 }
 
-function sectionHeading(eyebrow, title, description, action = '') {
-  return `<div class="section-heading"><div><span class="eyebrow">${esc(eyebrow)}</span><h1>${esc(title)}</h1>${description ? `<p>${esc(description)}</p>` : ''}</div>${action}</div>`;
+function sectionHeading(title, description, action = '') {
+  return `<div class="section-heading"><h1>${esc(title)}</h1>${description ? `<p>${esc(description)}</p>` : ''}${action}</div>`;
 }
 
 function statusBadge(boat, includeOwner = false) {
@@ -229,8 +230,8 @@ function marketScatter() {
 
 function attentionQueue() {
   const stageWeight = { max_decision: 4, diligence: 3, waiting: 2, watch: 1 };
-  const list = activeBoats(boats).filter((boat) => ['max_decision', 'diligence', 'waiting'].includes(boat.stage_bucket)).sort((a, b) => (stageWeight[b.stage_bucket] - stageWeight[a.stage_bucket]) || b.score - a.score).slice(0, 7);
-  return `<section class="surface attention-panel"><div class="panel-heading"><div><span class="eyebrow">Action queue</span><h2>What needs movement</h2></div><a href="#pipeline">See pipeline</a></div><div class="attention-list">${list.map((boat) => {
+  const list = activeBoats(boats).filter((boat) => ['max_decision', 'diligence', 'waiting'].includes(boat.stage_bucket)).sort((a, b) => (stageWeight[b.stage_bucket] - stageWeight[a.stage_bucket]) || b.score - a.score).slice(0, 5);
+  return `<section class="surface attention-panel"><div class="panel-heading"><div><h2>Next actions</h2></div><a href="#pipeline">See pipeline</a></div><div class="attention-list">${list.map((boat) => {
     const latest = latestConversation(boat.id, conversations);
     return `<button class="attention-row" data-boat="${boat.id}"><span class="attention-main">${identity(boat, { compact: true })}${statusBadge(boat)}</span><span class="attention-copy"><strong>${esc(actionOwner(boat))} owes next action</strong><small>${esc(truncate(latest?.facts || boat.next_step, 105))}</small></span><span class="arrow" aria-hidden="true">→</span></button>`;
   }).join('')}</div></section>`;
@@ -290,11 +291,11 @@ function boatTable(list) {
 
 function inventorySection() {
   const filtered = filterBoats(boats, state);
-  return `<section class="surface inventory-surface"><div class="panel-heading inventory-heading"><div><span class="eyebrow">Decision universe</span><h2>Compare the fleet</h2><p>Economics, readiness and diligence in one scan. Select up to four boats.</p></div></div>${inventoryControls()}${boatTable(filtered)}</section>`;
+  return `<section class="surface inventory-surface"><div class="panel-heading inventory-heading"><div><h2>Fleet</h2><p>Economics, readiness and diligence in one scan · select up to four boats</p></div></div>${inventoryControls()}${boatTable(filtered)}</section>`;
 }
 
 function overview() {
-  return `${sectionHeading('Executive overview', 'Find the boat worth advancing', 'Purchase economics, offshore readiness and diligence—ranked around the decision, not the vessel name.')}${kpiStrip()}<div class="overview-grid"><section class="surface chart-surface"><div class="panel-heading"><div><span class="eyebrow">Market map</span><h2>Where size, age and all-in cost intersect</h2><p>Left is less expensive; higher is newer; bubble size is length. Click any boat for evidence.</p></div><a href="#pricing">Cost detail</a></div>${marketScatter()}</section>${attentionQueue()}</div>${inventorySection()}`;
+  return `${sectionHeading('Overview', '')}${kpiStrip()}<div class="overview-grid"><section class="surface chart-surface"><div class="panel-heading"><div><h2>Age, size & total cost</h2><p>Lower cost ← · newer ↑ · larger bubble = longer boat</p></div><a href="#pricing">Cost detail</a></div>${marketScatter()}</section>${attentionQueue()}</div>${inventorySection()}`;
 }
 
 function validCostRows(currency) {
@@ -315,7 +316,7 @@ function costStack() {
     return aEcon.allIn - bEcon.allIn;
   });
   const max = Math.max(...rows.map((boat) => economics(boat).allIn), 1);
-  return `<section class="surface cost-stack-surface"><div class="panel-heading"><div><span class="eyebrow">Ready-to-cruise economics</span><h2>Purchase price + planning uplift</h2><p>The full bar is the canonical estimated all-in cost. The lighter segment is the modeled gap above ask.</p></div><div class="inline-controls"><div class="segmented">${['USD', 'EUR'].map((currency) => `<button data-chart-currency="${currency}" class="${state.chartCurrency === currency ? 'active' : ''}" aria-pressed="${state.chartCurrency === currency}">${currency}</button>`).join('')}</div><label><span class="sr-only">Sort cost chart</span><select id="costSort"><option value="allIn" ${state.costSort === 'allIn' ? 'selected' : ''}>Sort: total cost</option><option value="ask" ${state.costSort === 'ask' ? 'selected' : ''}>Sort: purchase price</option><option value="length" ${state.costSort === 'length' ? 'selected' : ''}>Sort: length</option><option value="year" ${state.costSort === 'year' ? 'selected' : ''}>Sort: year</option><option value="score" ${state.costSort === 'score' ? 'selected' : ''}>Sort: score</option></select></label></div></div>
+  return `<section class="surface cost-stack-surface"><div class="panel-heading"><div><h2>Purchase + refit</h2><p>Full bar = estimated all-in cost</p></div><div class="inline-controls"><div class="segmented">${['USD', 'EUR'].map((currency) => `<button data-chart-currency="${currency}" class="${state.chartCurrency === currency ? 'active' : ''}" aria-pressed="${state.chartCurrency === currency}">${currency}</button>`).join('')}</div><label><span class="sr-only">Sort cost chart</span><select id="costSort"><option value="allIn" ${state.costSort === 'allIn' ? 'selected' : ''}>Sort: total cost</option><option value="ask" ${state.costSort === 'ask' ? 'selected' : ''}>Sort: purchase price</option><option value="length" ${state.costSort === 'length' ? 'selected' : ''}>Sort: length</option><option value="year" ${state.costSort === 'year' ? 'selected' : ''}>Sort: year</option><option value="score" ${state.costSort === 'score' ? 'selected' : ''}>Sort: score</option></select></label></div></div>
     <div class="cost-legend"><span><i class="ask"></i>Purchase</span><span><i class="uplift"></i>All-in uplift</span></div><div class="cost-stack">${rows.map((boat) => {
       const econ = economics(boat);
       const askWidth = (econ.ask / max) * 100;
@@ -326,25 +327,25 @@ function costStack() {
 
 function valueTable() {
   const cohort = activeBoats(boats).filter((boat) => inferCurrency(boat) === state.chartCurrency && Number.isFinite(economics(boat).allInPerFoot)).sort((a, b) => economics(a).allInPerFoot - economics(b).allInPerFoot).slice(0, 14);
-  return `<section class="surface value-surface"><div class="panel-heading"><div><span class="eyebrow">Relative value</span><h2>Lowest all-in cost per foot</h2><p>A screening lens—not a quality conclusion.</p></div></div><div class="compact-list">${cohort.map((boat, index) => {
+  return `<section class="surface value-surface"><div class="panel-heading"><div><h2>All-in cost per foot</h2><p>Screening signal—not a quality conclusion</p></div></div><div class="compact-list">${cohort.map((boat, index) => {
     const econ = economics(boat);
     return `<button data-boat="${boat.id}" class="rank-row"><span class="rank">${index + 1}</span>${identity(boat, { compact: true })}<span class="rank-value">${money(Math.round(econ.allInPerFoot), econ.currency)}<small>/ft</small></span></button>`;
   }).join('')}</div></section>`;
 }
 
 function pricing() {
-  return `${sectionHeading('Market & cost', 'See past the asking price', 'Total acquisition cost matters more than a cheap listing. Refit burden and size make the trade-off visible.')}<div class="pricing-grid">${costStack()}${valueTable()}</div><section class="insight-callout"><span class="eyebrow">How to read this</span><strong>Low all-in cost per foot can reveal value—but only after structural, mechanical and documentation risk survive diligence.</strong></section>`;
+  return `${sectionHeading('Market & cost', '')}<div class="pricing-grid">${costStack()}${valueTable()}</div><section class="insight-callout"><strong>Low all-in cost per foot can reveal value—but only after structural, mechanical and documentation risk survive diligence.</strong></section>`;
 }
 
 function pipeline() {
   const active = activeBoats(boats);
   const order = ['max_decision', 'diligence', 'waiting', 'watch', 'closed'];
   const grouped = groupBy(boats, 'stage_bucket');
-  return `${sectionHeading('Diligence pipeline', 'Know exactly who owes the next move', `${active.length} active records organized by acquisition-specific state.`)}<div class="pipeline-board">${order.map((bucket) => {
+  return `${sectionHeading('Pipeline', `${active.length} active boats · organized by who owes the next move`)}<div class="pipeline-board">${order.map((bucket) => {
     const list = (grouped[bucket] || []).slice().sort((a, b) => b.score - a.score);
     return `<section class="pipeline-column"><header><span class="status-badge ${STATUS_TONE[bucket]}"><span></span>${esc(STAGE_LABELS[bucket] || bucket)}</span><strong>${list.length}</strong></header><div class="pipeline-cards">${list.map((boat) => {
       const latest = latestConversation(boat.id, conversations);
-      return `<button class="pipeline-card" data-boat="${boat.id}">${identity(boat, { compact: true })}<div class="pipeline-econ"><strong>${boat.ask_display ? esc(truncate(boat.ask_display, 28)) : 'Ask unknown'}</strong>${scoreChip(boat.score)}</div><div class="next-owner"><span>${esc(actionOwner(boat))}</span><small>${esc(truncate(boat.next_step, 105))}</small></div>${latest ? `<div class="mini-reply">Last reply ${relativeDate(latest.date, generatedDate)} · ${esc(truncate(latest.facts, 78))}</div>` : ''}</button>`;
+      return `<button class="pipeline-card" data-boat="${boat.id}">${identity(boat, { compact: true })}<div class="pipeline-econ"><strong>${boat.ask_display ? esc(truncate(boat.ask_display, 28)) : 'Ask unknown'}</strong>${scoreChip(boat.score)}</div><p class="pipeline-next"><strong>${esc(actionOwner(boat))}:</strong> ${esc(truncate(boat.next_step, 112))}</p>${latest ? `<p class="mini-reply">Reply ${relativeDate(latest.date, generatedDate)} · ${esc(truncate(latest.facts, 82))}</p>` : ''}</button>`;
     }).join('')}</div></section>`;
   }).join('')}</div>`;
 }
@@ -365,16 +366,96 @@ function conversationsView() {
   const contacted = new Set(boats.filter((boat) => boat.last_reached_out && boat.last_reached_out !== '—').map((boat) => boat.id)).size;
   const responded = new Set(conversations.filter((event) => event.boat_id).map((event) => event.boat_id)).size;
   const needingReview = activeBoats(boats).filter((boat) => boat.stage_bucket === 'diligence').length;
-  return `${sectionHeading('Correspondence', 'Turn every reply into a decision', 'The latest facts, their effect on the ranking and the next action—without rereading the whole inbox.')}<section class="conversation-stats"><div><span>Boats contacted</span><strong>${contacted}</strong></div><div><span>Boats with replies</span><strong>${responded}</strong></div><div><span>Replies needing review</span><strong>${needingReview}</strong></div><div><span>Logged events</span><strong>${conversations.length}</strong></div></section><section class="surface correspondence-surface"><div class="panel-heading"><div><span class="eyebrow">Evidence log</span><h2>Latest meaningful interactions</h2><p>Newest first · exact Gmail links remain the source of truth.</p></div></div><div class="correspondence-timeline">${dated.map(correspondenceCard).join('')}</div></section>`;
+  return `${sectionHeading('Correspondence', '')}<section class="conversation-stats"><div><span>Boats contacted</span><strong>${contacted}</strong></div><div><span>Boats with replies</span><strong>${responded}</strong></div><div><span>Needs review</span><strong>${needingReview}</strong></div><div><span>Logged events</span><strong>${conversations.length}</strong></div></section><section class="surface correspondence-surface"><div class="panel-heading"><div><h2>Latest interactions</h2><p>Newest first · Gmail remains the source of truth</p></div></div><div class="correspondence-timeline">${dated.map(correspondenceCard).join('')}</div></section>`;
+}
+
+function geographyMap(list) {
+  const width = 1120;
+  const height = 390;
+  const bounds = { west: -105, east: 38, north: 55, south: 5 };
+  const project = ({ lat, lon }) => ({
+    x: ((lon - bounds.west) / (bounds.east - bounds.west)) * width,
+    y: ((bounds.north - lat) / (bounds.north - bounds.south)) * height,
+  });
+  const landMasses = [
+    [[-105, 55], [-56, 55], [-58, 51], [-64, 47], [-69, 44], [-73, 41], [-76, 36], [-80, 30], [-80, 25], [-82, 24], [-84, 29], [-91, 29], [-97, 26], [-105, 29]],
+    [[-105, 27], [-97, 25], [-92, 20], [-87, 16], [-83, 9], [-77, 8], [-80, 13], [-85, 17], [-91, 19], [-99, 23]],
+    [[-82, 12], [-75, 11], [-69, 12], [-61, 10], [-52, 5], [-82, 5]],
+    [[-12, 55], [38, 55], [38, 35], [33, 35], [26, 38], [19, 40], [15, 43], [9, 44], [3, 43], [-1, 45], [-8, 44], [-10, 50]],
+    [[-17, 36], [-5, 35], [10, 37], [28, 33], [38, 31], [38, 5], [-17, 5], [-16, 17], [-17, 27]],
+  ];
+  const pathFor = (points) => `${points.map(([lon, lat], index) => { const point = project({ lat, lon }); return `${index ? 'L' : 'M'}${point.x.toFixed(1)},${point.y.toFixed(1)}`; }).join('')}Z`;
+  const shortPlace = (locations) => {
+    const value = [...locations].join(' ').toLowerCase();
+    if (/grenada|saint george|st\. george|port louis|saint david/.test(value) && /trinidad|chaguaramas/.test(value)) return 'Southern Caribbean';
+    if (/bvi|tortola|virgin gorda|road town|hodge creek/.test(value) && /usvi|st\.? thomas|st\.? john|cruz bay/.test(value)) return 'Virgin Islands';
+    if (/fort lauderdale|dania beach|riviera beach|daytona|st\.? augustine/.test(value) && [...locations].length > 1) return 'Florida';
+    if (/bvi|tortola|virgin gorda|road town|hodge creek/.test(value)) return 'BVI';
+    if (/grenada|saint george|st\. george|port louis|saint david/.test(value)) return 'Grenada';
+    if (/fort lauderdale|dania beach/.test(value)) return 'Fort Lauderdale';
+    if (/st\.? augustine/.test(value)) return 'St. Augustine';
+    if (/martinique|le marin/.test(value)) return 'Martinique';
+    if (/puerto rico|fajardo/.test(value)) return 'Puerto Rico';
+    if (/cura[cç]ao|willemstad/.test(value)) return 'Curaçao';
+    return [...locations][0].replace(/,.*$/, '');
+  };
+  const markerGroups = new Map();
+  for (const boat of list) {
+    const coordinates = locationCoordinates(boat.location);
+    if (!coordinates) continue;
+    const key = `${coordinates.lat.toFixed(1)},${coordinates.lon.toFixed(1)}`;
+    if (!markerGroups.has(key)) markerGroups.set(key, { coordinates, boats: [], locations: new Set() });
+    const group = markerGroups.get(key);
+    group.boats.push(boat);
+    group.locations.add(boat.location);
+  }
+  const markers = [];
+  for (const group of markerGroups.values()) {
+    const point = project(group.coordinates);
+    const nearby = markers.find((candidate) => {
+      const candidatePoint = project(candidate.coordinates);
+      return regionFor(candidate.boats[0]) === regionFor(group.boats[0])
+        && Math.hypot(candidatePoint.x - point.x, candidatePoint.y - point.y) < 18;
+    });
+    if (nearby) {
+      const existingCount = nearby.boats.length;
+      const addedCount = group.boats.length;
+      nearby.coordinates = {
+        lat: ((nearby.coordinates.lat * existingCount) + (group.coordinates.lat * addedCount)) / (existingCount + addedCount),
+        lon: ((nearby.coordinates.lon * existingCount) + (group.coordinates.lon * addedCount)) / (existingCount + addedCount),
+      };
+      nearby.boats.push(...group.boats);
+      group.locations.forEach((location) => nearby.locations.add(location));
+    } else {
+      markers.push({ ...group, boats: [...group.boats], locations: new Set(group.locations) });
+    }
+  }
+  markers.forEach((group) => group.boats.sort((a, b) => b.score - a.score));
+  const regions = Object.entries(groupBy(list, regionFor)).sort((a, b) => b[1].length - a[1].length);
+  return `<section class="surface geo-map-surface"><div class="panel-heading"><div><h2>Fleet locations</h2><p>Approximate marina areas · select a marker to open its highest-priority boat</p></div><div class="map-region-summary">${regions.map(([region, boatsInRegion]) => `<span><strong>${boatsInRegion.length}</strong> ${esc(region)}</span>`).join('')}</div></div><div class="geo-map-wrap"><svg class="geo-map" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="geo-map-title geo-map-desc"><title id="geo-map-title">Active catamaran locations across the Atlantic, Caribbean and Mediterranean</title><desc id="geo-map-desc">Approximate location markers sized by the number of active tracked boats. Select a marker to open the highest-priority boat at that location.</desc>
+    ${[-90, -60, -30, 0, 30].map((lon) => { const point = project({ lat: bounds.south, lon }); return `<line class="map-grid" x1="${point.x}" x2="${point.x}" y1="0" y2="${height}"/>`; }).join('')}
+    ${[10, 20, 30, 40, 50].map((lat) => { const point = project({ lat, lon: bounds.west }); return `<line class="map-grid" x1="0" x2="${width}" y1="${point.y}" y2="${point.y}"/>`; }).join('')}
+    ${landMasses.map((points) => `<path class="map-land" d="${pathFor(points)}"/>`).join('')}
+    ${markers.map((group) => {
+      const point = project(group.coordinates);
+      const count = group.boats.length;
+      const radius = Math.min(15, 5.5 + Math.sqrt(count) * 2.2);
+      const top = group.boats[0];
+      const place = shortPlace(group.locations);
+      const label = `${place}: ${count} active boat${count === 1 ? '' : 's'}. Highest priority ${boatIdentity(top)}, score ${top.score.toFixed(1)}.`;
+      return `<g class="map-marker" transform="translate(${point.x.toFixed(1)} ${point.y.toFixed(1)})" data-boat="${top.id}" tabindex="0" role="button" aria-label="${attr(label)}"><circle r="${radius}"><title>${esc(label)}</title></circle>${count > 1 ? `<text class="map-marker-count" text-anchor="middle" y="3">${count}</text>` : ''}${count >= 3 ? `<text class="map-place-label" x="${radius + 5}" y="4">${esc(place)}</text>` : ''}</g>`;
+    }).join('')}
+  </svg></div><p class="map-note">Positions are conservative frontend estimates from the recorded location names, not live vessel coordinates.</p></section>`;
 }
 
 function geography() {
-  const grouped = groupBy(activeBoats(boats), regionFor);
+  const active = activeBoats(boats);
+  const grouped = groupBy(active, regionFor);
   const regions = Object.entries(grouped).sort((a, b) => b[1].length - a[1].length);
-  return `${sectionHeading('Geography', 'Understand the repositioning burden', 'Location changes travel, survey, tax, delivery and seasonality. This view uses conservative frontend region grouping.')}<div class="region-grid">${regions.map(([region, list]) => {
+  return `${sectionHeading('Geography', '')}${geographyMap(active)}<div class="region-grid">${regions.map(([region, list]) => {
     const medianScore = median(list.map((boat) => boat.score));
     const top = list.slice().sort((a, b) => b.score - a.score).slice(0, 5);
-    return `<section class="surface region-card"><header><div><span class="eyebrow">${esc(region)}</span><h2>${list.length} active boat${list.length === 1 ? '' : 's'}</h2></div><span class="region-score">Median score <strong>${medianScore?.toFixed(1) || '—'}</strong></span></header><div class="compact-list">${top.map((boat) => `<button data-boat="${boat.id}" class="rank-row">${identity(boat, { compact: true })}<span class="rank-value">${esc(boat.ask_display || 'Ask unknown')}</span></button>`).join('')}</div></section>`;
+    return `<section class="surface region-card"><header><h2>${esc(region)} <span>${list.length}</span></h2><span class="region-score">Median priority <strong>${medianScore?.toFixed(1) || '—'}</strong></span></header><div class="compact-list">${top.map((boat) => `<button data-boat="${boat.id}" class="rank-row">${identity(boat, { compact: true })}<span class="rank-value">${esc(boat.ask_display || 'Ask unknown')}</span></button>`).join('')}</div></section>`;
   }).join('')}</div>`;
 }
 
@@ -388,7 +469,7 @@ function riskAndReadiness() {
     const severity = (boat) => riskItems(boat).reduce((sum, risk) => sum + (risk.severity === 'high' ? 3 : risk.severity === 'medium' ? 2 : 1), 0);
     return severity(b) - severity(a) || b.score - a.score;
   }).slice(0, 12);
-  return `${sectionHeading('Risk & readiness', 'Separate capex from uncertainty', 'Known upgrades, unresolved diligence and genuine structural or mechanical risks should not all look the same.')}<div class="risk-overview"><section class="surface"><div class="panel-heading"><div><span class="eyebrow">Risk taxonomy</span><h2>What can break the thesis</h2></div></div><div class="risk-category-grid">${categories.map((kind) => `<div class="risk-category ${kind}"><span>${labels[kind]}</span><strong>${risks.filter((risk) => risk.kind === kind).length}</strong><small>logged mentions</small></div>`).join('')}</div></section><section class="surface"><div class="panel-heading"><div><span class="eyebrow">Fleet evidence</span><h2>Off-grid system coverage</h2><p>Keyword-derived from current canonical summaries; unknown is not the same as absent.</p></div></div><div class="readiness-bars">${systems.map((system) => `<div class="readiness-bar"><span>${system.label}</span><div><i class="ready" style="width:${system.ready / active.length * 100}%" title="${system.ready} documented ready"></i><i class="watch" style="width:${system.watch / active.length * 100}%" title="${system.watch} need verification"></i><i class="missing" style="width:${system.missing / active.length * 100}%" title="${system.missing} documented missing"></i></div><small>${system.ready} ready · ${system.watch + system.missing} issue</small></div>`).join('')}</div></section></div><section class="surface risk-table-surface"><div class="panel-heading"><div><span class="eyebrow">Priority diligence</span><h2>Biggest unresolved risks</h2></div></div><div class="risk-list">${highRisk.map((boat) => { const risk = riskItems(boat)[0] || { text: 'No risk logged', kind: 'unknown', label: 'Unknown' }; return `<button data-boat="${boat.id}" class="risk-row">${identity(boat, { compact: true })}<span class="risk-kind ${risk.kind}">${risk.label}</span><span class="risk-copy">${esc(risk.text)}</span><span class="arrow">→</span></button>`; }).join('')}</div></section>`;
+  return `${sectionHeading('Risk & readiness', '')}<div class="risk-overview"><section class="surface"><div class="panel-heading"><div><h2>What can break the thesis</h2></div></div><div class="risk-category-grid">${categories.map((kind) => `<div class="risk-category ${kind}"><span>${labels[kind]}</span><strong>${risks.filter((risk) => risk.kind === kind).length}</strong><small>logged mentions</small></div>`).join('')}</div></section><section class="surface"><div class="panel-heading"><div><h2>Off-grid system coverage</h2><p>Unknown means the evidence is incomplete—not that a system is absent</p></div></div><div class="readiness-bars">${systems.map((system) => `<div class="readiness-bar"><span>${system.label}</span><div><i class="ready" style="width:${system.ready / active.length * 100}%" title="${system.ready} documented ready"></i><i class="watch" style="width:${system.watch / active.length * 100}%" title="${system.watch} need verification"></i><i class="missing" style="width:${system.missing / active.length * 100}%" title="${system.missing} documented missing"></i></div><small>${system.ready} ready · ${system.watch + system.missing} issue</small></div>`).join('')}</div></section></div><section class="surface risk-table-surface"><div class="panel-heading"><div><h2>Biggest unresolved risks</h2></div></div><div class="risk-list">${highRisk.map((boat) => { const risk = riskItems(boat)[0] || { text: 'No risk logged', kind: 'unknown', label: 'Unknown' }; return `<button data-boat="${boat.id}" class="risk-row">${identity(boat, { compact: true })}<span class="risk-kind ${risk.kind}">${risk.label}</span><span class="risk-copy">${esc(risk.text)}</span><span class="arrow">→</span></button>`; }).join('')}</div></section>`;
 }
 
 function layoutSummary(boat) {
@@ -442,7 +523,7 @@ function compareMatrix(list) {
 function compareView() {
   const list = comparisonBoats();
   const candidatePicker = priorityBoats(boats, 14);
-  return `${sectionHeading('Compare', 'Make trade-offs impossible to miss', state.selected.size ? `${state.selected.size} boats selected. Best comparable numeric values are highlighted.` : 'Showing a suggested top-three comparison. Select up to four boats anywhere in the dashboard to replace it.')}<section class="surface compare-picker"><div class="panel-heading"><div><span class="eyebrow">Shortlist</span><h2>Choose 2–4 boats</h2></div>${state.selected.size ? '<button class="text-button" data-clear-selection>Clear selection</button>' : ''}</div><div class="picker-row">${candidatePicker.map((boat) => `<label class="picker-chip ${state.selected.has(boat.id) ? 'selected' : ''}"><input type="checkbox" data-select="${boat.id}" ${state.selected.has(boat.id) ? 'checked' : ''}><span>${boat.year} ${esc(boat.model)}<small>${boat.score.toFixed(1)} · ${esc(boat.ask_display)}</small></span></label>`).join('')}</div></section><section class="surface compare-matrix-surface">${compareMatrix(list)}<p class="method-note">Sailability is a model-level planning signal, not a prediction for a specific boat. ${esc(sailingMethodology)}</p></section>`;
+  return `${sectionHeading('Compare', state.selected.size ? `${state.selected.size} boats selected · best comparable values are highlighted` : 'Suggested top three · select up to four boats to replace them')}<section class="surface compare-picker"><div class="panel-heading"><div><h2>Shortlist</h2></div>${state.selected.size ? '<button class="text-button" data-clear-selection>Clear selection</button>' : ''}</div><div class="picker-row">${candidatePicker.map((boat) => `<label class="picker-chip ${state.selected.has(boat.id) ? 'selected' : ''}"><input type="checkbox" data-select="${boat.id}" ${state.selected.has(boat.id) ? 'checked' : ''}><span>${boat.year} ${esc(boat.model)}<small>${boat.score.toFixed(1)} · ${esc(boat.ask_display)}</small></span></label>`).join('')}</div></section><section class="surface compare-matrix-surface">${compareMatrix(list)}<p class="method-note">Sailability is a model-level planning signal, not a prediction for a specific boat. ${esc(sailingMethodology)}</p></section>`;
 }
 
 function recommendationFor(boat) {
@@ -466,18 +547,28 @@ function riskPanel(boat) {
   return `<div class="risk-detail-list">${items.map((risk) => `<div><span class="risk-kind ${risk.kind}">${risk.label}</span><p>${esc(risk.text)}</p></div>`).join('')}</div>`;
 }
 
-function economicsPanel(boat) {
+function detailMetricStrip(boat) {
   const econ = economics(boat);
   const valueRank = relativeValueRank(boat, boats);
   const mixedCurrencies = econ.currency && econ.refitCurrency && econ.currency !== econ.refitCurrency;
-  const uplift = Number.isFinite(econ.ask) && Number.isFinite(econ.allIn) ? Math.max(0, econ.allIn - econ.ask) : null;
-  const total = econ.allIn || 1;
-  return `<div class="economics-panel"><div class="economic-number"><span>Purchase</span><strong>${planningMoney(econ.ask, econ.currency, boat.ask_display)}</strong><small>${esc(boat.ask_display)}</small></div><div class="economic-plus">+</div><div class="economic-number"><span>Immediate refit</span><strong>${planningMoney(econ.refit, econ.refitCurrency, boat.refit_display)}</strong><small>${esc(boat.refit_display)}</small></div><div class="economic-equals">=</div><div class="economic-number total"><span>Estimated all-in</span><strong>${planningMoney(econ.allIn, econ.currency, boat.all_in_display)}</strong><small>${esc(boat.all_in_display)}</small></div>${mixedCurrencies ? `<div class="fx-warning">Refit is recorded in ${econ.refitCurrency}; ask and all-in are ${econ.currency}. No FX conversion is implied.</div>` : ''}${Number.isFinite(uplift) ? `<div class="economic-bar"><i class="ask" style="width:${Math.min(100, econ.ask / total * 100)}%"></i><i class="uplift" style="width:${Math.min(100, uplift / total * 100)}%"></i></div>` : ''}<div class="derived-metrics"><div><span>All-in / ft</span><strong>${econ.allInPerFoot ? `${money(Math.round(econ.allInPerFoot), econ.currency)}/ft` : '—'}</strong></div><div><span>Refit burden</span><strong>${econ.refitBurden ? `~${Math.round(econ.refitBurden * 100)}%` : '—'}</strong><small>${mixedCurrencies ? 'Not calculated across currencies' : ''}</small></div><div><span>Relative value</span><strong>${valueRank ? `#${valueRank.rank} of ${valueRank.total}` : '—'}</strong><small>${valueRank ? `${valueRank.currency} active cohort` : 'Insufficient data'}</small></div></div></div>`;
+  const sailing = sailingProfile(boat.model);
+  const allInNotes = [
+    econ.allInPerFoot ? `${money(Math.round(econ.allInPerFoot), econ.currency)}/ft` : '',
+    valueRank ? `value #${valueRank.rank}/${valueRank.total}` : '',
+  ].filter(Boolean).join(' · ');
+  const metrics = [
+    ['Asking', planningMoney(econ.ask, econ.currency, boat.ask_display), boat.ask_display],
+    ['Refit', planningMoney(econ.refit, econ.refitCurrency, boat.refit_display), econ.refitBurden ? `~${Math.round(econ.refitBurden * 100)}% of ask` : boat.refit_display],
+    ['Est. all-in', planningMoney(econ.allIn, econ.currency, boat.all_in_display), allInNotes || boat.all_in_display, 'primary'],
+    ['Priority', `<strong class="metric-score">${boat.score.toFixed(1)}</strong><span class="metric-denominator">/10</span>`, `Tier ${boat.tier}`],
+    ['Sailability', `<strong class="metric-score">${sailing.score.toFixed(1)}</strong><span class="metric-denominator">/10</span>`, sailing.passageSpeed],
+  ];
+  return `<section class="detail-metrics" aria-label="Boat economics and scores">${metrics.map(([label, value, note, className = '']) => `<div class="detail-metric ${className}"><span>${label}</span><div>${value}</div><small>${esc(note || '')}</small></div>`).join('')}${mixedCurrencies ? `<p class="detail-metrics-note">Refit is recorded in ${econ.refitCurrency}; ask and all-in are ${econ.currency}. No FX conversion is implied.</p>` : ''}</section>`;
 }
 
 function sailingPanel(boat) {
   const profile = sailingProfile(boat.model);
-  return `<div class="sailing-panel"><div class="sail-score"><strong>${profile.score.toFixed(1)}</strong><span>/10</span></div><div><span class="eyebrow">Model-level sailability</span><h3>${esc(profile.label)}</h3><p><strong>${profile.passageSpeed}</strong> planning passage range. ${esc(profile.note)}</p>${profile.source ? `<a href="${attr(profile.source)}" target="_blank" rel="noreferrer">Read source review <span aria-hidden="true">↗</span></a>` : ''}</div></div><p class="method-note">${esc(sailingMethodology)}</p>`;
+  return `<div class="sailing-panel"><div class="sail-score"><strong>${profile.score.toFixed(1)}</strong><span>/10</span></div><div><h3>${esc(profile.label)}</h3><p><strong>${profile.passageSpeed}</strong> planning passage range. ${esc(profile.note)}</p>${profile.source ? `<a href="${attr(profile.source)}" target="_blank" rel="noreferrer">Source review <span aria-hidden="true">↗</span></a>` : ''}</div></div><p class="method-note">${esc(sailingMethodology)}</p>`;
 }
 
 function boatDetail() {
@@ -485,16 +576,14 @@ function boatDetail() {
   if (!boat) return '<div class="empty-state page-empty"><strong>Boat not found</strong><p>The stable ID in this link is not present in the current canonical dataset.</p><a class="button" href="#overview">Return to overview</a></div>';
   const econ = economics(boat);
   const events = (conversationsByBoat[boat.id] || []).slice().sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
-  const sailing = sailingProfile(boat.model);
   const selected = state.selected.has(boat.id);
-  return `<div class="detail-page"><div class="detail-toolbar"><a href="#overview" class="back-link"><span aria-hidden="true">←</span> Back to overview</a><label class="compare-toggle"><input type="checkbox" data-select="${boat.id}" ${selected ? 'checked' : ''}><span>${selected ? 'Added to compare' : 'Add to compare'}</span></label></div><header class="detail-header"><div><span class="eyebrow">Tier ${boat.tier} candidate · ${esc(boat.name)}</span><h1>${boat.year ?? 'Year unknown'} ${esc(boat.model)}${econ.length ? ` <span>· ${econ.length} ft</span>` : ''}</h1><p>${esc(boat.location)}</p><div class="detail-status">${statusBadge(boat, true)}</div></div><div class="detail-scores"><div><span>Priority</span>${scoreChip(boat.score)}</div><div><span>Sailability</span><strong>${sailing.score.toFixed(1)}</strong><small>${sailing.passageSpeed}</small></div></div></header><section class="recommendation"><span class="eyebrow">Current recommendation</span><strong>${esc(recommendationFor(boat))}</strong><p><span>${esc(actionOwner(boat))} owns the next move:</span> ${esc(boat.next_step)}</p></section><div class="detail-grid">
-    <section class="surface detail-economics wide"><div class="panel-heading"><div><span class="eyebrow">Deal economics</span><h2>Cost to become cruise-ready</h2></div></div>${economicsPanel(boat)}</section>
-    <section class="surface"><div class="panel-heading"><div><span class="eyebrow">Investment case</span><h2>Why it is interesting</h2></div></div><div class="prose-panel"><p>${esc(boat.why)}</p>${boat.notes ? `<div class="analyst-note"><span>Working note</span><p>${esc(boat.notes)}</p></div>` : ''}</div></section>
-    <section class="surface"><div class="panel-heading"><div><span class="eyebrow">Diligence</span><h2>Biggest risks</h2></div></div>${riskPanel(boat)}</section>
-    <section class="surface wide"><div class="panel-heading"><div><span class="eyebrow">Off-grid readiness</span><h2>Systems evidence matrix</h2><p>Derived from the current narrative fields; unknown means the data is not normalized.</p></div></div>${readinessPanel(boat)}</section>
-    <section class="surface wide"><div class="panel-heading"><div><span class="eyebrow">Passage performance</span><h2>Will it feel slow offshore?</h2></div></div>${sailingPanel(boat)}</section>
-    <section class="surface correspondence-detail wide"><div class="panel-heading"><div><span class="eyebrow">Correspondence</span><h2>Evidence timeline</h2><p>${events.length} linked interaction${events.length === 1 ? '' : 's'} · newest first</p></div></div>${events.length ? `<div class="correspondence-timeline">${events.map(correspondenceCard).join('')}</div>` : '<div class="empty-state compact"><strong>No linked correspondence yet</strong><p>The vessel may be uncontacted or correspondence may only exist in a multi-boat thread.</p></div>'}</section>
-    <section class="surface wide"><div class="panel-heading"><div><span class="eyebrow">Documents & resources</span><h2>Source links</h2><p>The current schema has listing and Gmail links but no first-class document registry.</p></div></div><div class="resource-list">${boat.listing_url ? `<a href="${attr(boat.listing_url)}" target="_blank" rel="noreferrer"><span><strong>Current listing</strong><small>${esc(boat.listing_url)}</small></span><b aria-hidden="true">↗</b></a>` : ''}${events.filter((event) => event.gmail_url).map((event) => `<a href="${attr(event.gmail_url)}" target="_blank" rel="noreferrer"><span><strong>${esc(event.subject)}</strong><small>Gmail · ${event.date}</small></span><b aria-hidden="true">↗</b></a>`).join('')}${!boat.listing_url && !events.some((event) => event.gmail_url) ? '<div class="empty-state compact">No source links recorded.</div>' : ''}</div></section>
+  return `<div class="detail-page"><div class="detail-toolbar"><a href="#overview" class="back-link"><span aria-hidden="true">←</span> Overview</a><label class="compare-toggle"><input type="checkbox" data-select="${boat.id}" ${selected ? 'checked' : ''}><span>${selected ? 'Added to compare' : 'Add to compare'}</span></label></div><header class="detail-header"><div><h1>${boat.year ?? 'Year unknown'} ${esc(boat.model)}${econ.length ? ` <span>· ${econ.length} ft</span>` : ''}</h1><div class="detail-subline"><span>${esc(boat.name)}</span><span>${esc(boat.location)}</span>${statusBadge(boat, true)}</div></div></header>${detailMetricStrip(boat)}<section class="decision-strip"><strong>${esc(recommendationFor(boat))}</strong><span><b>${esc(actionOwner(boat))}</b> next · ${esc(boat.next_step)}</span></section><div class="detail-grid">
+    <section class="surface"><div class="panel-heading"><div><h2>Why it matters</h2></div></div><div class="prose-panel"><p>${esc(boat.why)}</p>${boat.notes ? `<div class="analyst-note"><span>Working note</span><p>${esc(boat.notes)}</p></div>` : ''}</div></section>
+    <section class="surface"><div class="panel-heading"><div><h2>Biggest risks</h2></div></div>${riskPanel(boat)}</section>
+    <section class="surface wide"><div class="panel-heading"><div><h2>Off-grid readiness</h2><p>Evidence extracted from current notes · unknown is not absent</p></div></div>${readinessPanel(boat)}</section>
+    <section class="surface wide"><div class="panel-heading"><div><h2>Passage performance</h2></div></div>${sailingPanel(boat)}</section>
+    <section class="surface correspondence-detail wide"><div class="panel-heading"><div><h2>Correspondence</h2><p>${events.length} interaction${events.length === 1 ? '' : 's'} · newest first</p></div></div>${events.length ? `<div class="correspondence-timeline">${events.map(correspondenceCard).join('')}</div>` : '<div class="empty-state compact"><strong>No linked correspondence yet</strong><p>The vessel may be uncontacted or correspondence may only exist in a multi-boat thread.</p></div>'}</section>
+    <section class="surface wide"><div class="panel-heading"><div><h2>Documents & links</h2></div></div><div class="resource-list">${boat.listing_url ? `<a href="${attr(boat.listing_url)}" target="_blank" rel="noreferrer"><span><strong>Current listing</strong><small>${esc(boat.listing_url)}</small></span><b aria-hidden="true">↗</b></a>` : ''}${events.filter((event) => event.gmail_url).map((event) => `<a href="${attr(event.gmail_url)}" target="_blank" rel="noreferrer"><span><strong>${esc(event.subject)}</strong><small>Gmail · ${event.date}</small></span><b aria-hidden="true">↗</b></a>`).join('')}${!boat.listing_url && !events.some((event) => event.gmail_url) ? '<div class="empty-state compact">No source links recorded.</div>' : ''}</div></section>
   </div></div>`;
 }
 
