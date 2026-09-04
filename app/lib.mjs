@@ -188,15 +188,56 @@ export function median(values) {
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
-export function daysSince(date, now = '2026-09-03') {
+function calendarDate(value) {
+  if (value instanceof Date) {
+    return new Date(Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()));
+  }
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const parsed = new Date(`${value}T12:00:00Z`);
+  return Number.isNaN(parsed.valueOf()) ? null : parsed;
+}
+
+export function daysSince(date, now = new Date()) {
   if (!date) return null;
-  const value = new Date(`${date}T12:00:00Z`);
-  const reference = new Date(`${now}T12:00:00Z`);
-  if (Number.isNaN(value.valueOf()) || Number.isNaN(reference.valueOf())) return null;
+  const value = calendarDate(date);
+  const reference = calendarDate(now);
+  if (!value || !reference) return null;
   return Math.max(0, Math.round((reference - value) / 86400000));
 }
 
-export function relativeDate(date, now = '2026-09-03') {
+export function daysOnMarket(boat, now = new Date()) {
+  if (!boat?.listed_date) return null;
+  return daysSince(boat.listed_date, boat.market_end_date || now);
+}
+
+export function listingDatePresentation(boat, now = new Date()) {
+  const days = daysOnMarket(boat, now);
+  if (!boat?.listed_date || !Number.isFinite(days)) {
+    return { dateLabel: 'Unknown', daysLabel: 'No DOM', qualifier: 'No reliable public date found', confidence: 'unknown', days: null };
+  }
+  const date = calendarDate(boat.listed_date);
+  const monthOnly = boat.listed_date_precision === 'month';
+  const formatted = new Intl.DateTimeFormat('en-US', monthOnly
+    ? { month: 'short', year: 'numeric', timeZone: 'UTC' }
+    : { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(date);
+  const confidence = boat.listed_date_confidence;
+  const prefix = confidence === 'first_seen' ? 'By ' : confidence === 'estimated' ? '~' : '';
+  const daysPrefix = confidence === 'first_seen' ? '≥' : confidence === 'estimated' ? '~' : '';
+  const ended = boat.market_end_date ? ' · historical' : '';
+  const qualifier = confidence === 'verified' ? 'Verified listing date'
+    : confidence === 'first_seen' ? 'Earliest public evidence; listing may be older'
+      : confidence === 'estimated' ? 'Estimated from month-level public evidence'
+        : 'No reliable public date found';
+  return {
+    dateLabel: `${prefix}${formatted}`,
+    daysLabel: `${daysPrefix}${days}d${ended}`,
+    qualifier,
+    confidence,
+    days,
+  };
+}
+
+export function relativeDate(date, now = new Date()) {
   if (!date || date === '—') return 'No reply';
   const days = daysSince(date, now);
   if (days === 0) return 'Today';
@@ -381,6 +422,7 @@ export function sortBoats(boats, key = 'score', direction = 'desc') {
     if (key === 'allInPerFoot') return econ.allInPerFoot ?? -Infinity;
     if (key === 'location') return (boat.location || '').toLowerCase();
     if (key === 'status') return preciseStatus(boat).toLowerCase();
+    if (key === 'daysOnMarket') return daysOnMarket(boat) ?? -Infinity;
     if (key === 'lastReply') return boat.last_heard_from && boat.last_heard_from !== '—' ? boat.last_heard_from : '';
     return boat.score ?? -Infinity;
   };

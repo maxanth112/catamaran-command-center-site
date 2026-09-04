@@ -17,6 +17,7 @@ import {
   isSeriousCandidate,
   latestConversation,
   locationCoordinates,
+  listingDatePresentation,
   median,
   money,
   needsOutreach,
@@ -28,8 +29,8 @@ import {
   relativeValueRank,
   riskItems,
   sortBoats,
-} from './lib.mjs?v=20260903.12';
-import { sailingMethodology, sailingProfile } from './model-insights.mjs?v=20260903.12';
+} from './lib.mjs?v=20260903.13';
+import { sailingMethodology, sailingProfile } from './model-insights.mjs?v=20260903.13';
 
 const ROUTES = [
   ['overview', 'Overview'],
@@ -344,10 +345,16 @@ function tableCostBar(boat) {
   return `<span class="table-cost" title="${attr(explanation)}"><span class="table-cost-track" aria-label="${attr(explanation)}"><i class="ask" style="width:${purchaseWidth}%"></i><i class="refit" style="width:${refitWidth}%"></i><i class="other" style="width:${otherWidth}%"></i></span><small><span>${compactMoney(parts.purchase, econ.currency)}${parts.assumedDiscount > 1000 ? ' basis' : ''}</span><span>+ ${compactMoney(parts.refit, econ.refitCurrency)}</span>${parts.other > 1000 ? `<span>+ ${compactMoney(parts.other, econ.currency)}</span>` : ''}</small></span>`;
 }
 
+function listingCell(boat) {
+  const listing = listingDatePresentation(boat);
+  const details = `${listing.qualifier}. ${boat.listed_date_notes}`;
+  return `<span class="listing-date ${listing.confidence}" title="${attr(details)}"><time datetime="${attr(boat.listed_date || '')}">${esc(listing.dateLabel)}</time><small>${esc(listing.daysLabel)}</small></span>`;
+}
+
 function boatTable(list) {
   const sorted = sortBoats(list, state.sortKey, state.sortDir);
   if (!sorted.length) return '<div class="empty-state"><strong>No boats match these filters</strong><p>Clear a preset or widen the numeric range.</p><button class="button" data-reset-filters>Reset filters</button></div>';
-  return `<div class="table-scroll"><table class="boat-table"><colgroup><col class="col-select"><col class="col-boat"><col class="col-cost"><col class="col-all-in"><col class="col-per-foot"><col class="col-priority"><col class="col-profile"><col class="col-location"><col class="col-diligence"><col class="col-risk"><col class="col-reply"></colgroup><thead><tr><th class="select-column"><span class="sr-only">Select</span></th>${sortHeader('boat', 'Boat')}${sortHeader('ask', 'All-in composition')}${sortHeader('allIn', 'Est. all-in', 'number')}${sortHeader('allInPerFoot', 'All-in / ft', 'number')}${sortHeader('score', 'Priority', 'number')}<th>Design profile</th>${sortHeader('location', 'Location')}${sortHeader('status', 'Diligence') }<th>Major risk</th>${sortHeader('lastReply', 'Last reply')}</tr></thead><tbody>${sorted.map((boat) => {
+  return `<div class="table-scroll"><table class="boat-table"><colgroup><col class="col-select"><col class="col-boat"><col class="col-cost"><col class="col-all-in"><col class="col-per-foot"><col class="col-priority"><col class="col-profile"><col class="col-listed"><col class="col-location"><col class="col-diligence"><col class="col-risk"><col class="col-reply"></colgroup><thead><tr><th class="select-column"><span class="sr-only">Select</span></th>${sortHeader('boat', 'Boat')}${sortHeader('ask', 'All-in composition')}${sortHeader('allIn', 'Est. all-in', 'number')}${sortHeader('allInPerFoot', 'All-in / ft', 'number')}${sortHeader('score', 'Priority', 'number')}<th>Design profile</th>${sortHeader('daysOnMarket', 'Listed / DOM')}${sortHeader('location', 'Location')}${sortHeader('status', 'Diligence') }<th>Major risk</th>${sortHeader('lastReply', 'Last reply')}</tr></thead><tbody>${sorted.map((boat) => {
     const econ = economics(boat);
     const sailing = sailingProfile(boat.model);
     const latest = latestConversation(boat.id, visibleConversations);
@@ -356,7 +363,7 @@ function boatTable(list) {
     return `<tr class="boat-row ${selected ? 'selected' : ''}" data-boat="${boat.id}" tabindex="0">
       <td class="select-column" data-label="Select"><label class="check-control" title="Add to comparison"><input type="checkbox" data-select="${boat.id}" ${selected ? 'checked' : ''} aria-label="Compare ${attr(boatIdentity(boat))}"><span></span></label></td><td data-label="Boat">${identity(boat)}</td>
       <td data-label="All-in composition">${tableCostBar(boat)}</td><td class="number all-in-cell" data-label="Est. all-in">${planningMoney(econ.allIn, econ.currency, boat.all_in_display)}</td><td class="number" data-label="All-in / ft"><span class="per-foot">${Number.isFinite(econ.allInPerFoot) ? `${money(Math.round(econ.allInPerFoot), econ.currency)}<small>/ft</small>` : '—'}</span></td>
-      <td class="number" data-label="Priority">${scoreChip(boat.score)}</td><td data-label="Design profile">${profileMini(sailing)}</td>
+      <td class="number" data-label="Priority">${scoreChip(boat.score)}</td><td data-label="Design profile">${profileMini(sailing)}</td><td data-label="Listed / DOM">${listingCell(boat)}</td>
       <td data-label="Location"><span class="location-cell">${esc(boat.location)}</span><small class="cell-note">${regionFor(boat)}</small></td><td data-label="Diligence">${statusBadge(boat, true)}</td><td data-label="Major risk">${structural ? `<span class="critical-risk" title="${attr(structural.text)}"><i aria-hidden="true"></i>${esc(truncate(structural.text, 74))}</span>` : '<span class="data-missing">—</span>'}</td>
       <td data-label="Last reply"><span class="reply-date">${relativeDate(boat.last_heard_from, generatedDate)}</span>${latest ? `<small class="reply-preview" title="${attr(latest.facts)}">${esc(truncate(latest.facts, 68))}</small>` : '<small class="cell-note">No linked reply</small>'}</td></tr>`;
   }).join('')}</tbody></table></div>`;
@@ -365,7 +372,7 @@ function boatTable(list) {
 function inventorySection() {
   const candidates = inventoryCandidates();
   const filtered = filterBoats(candidates, state);
-  return `<section class="surface inventory-surface"><div class="panel-heading inventory-heading"><div><h2>Fleet <span class="panel-count">${filtered.length}</span></h2></div></div>${inventoryControls(candidates)}${boatTable(filtered)}</section>`;
+  return `<section class="surface inventory-surface"><div class="panel-heading inventory-heading"><div><h2>Fleet <span class="panel-count">${filtered.length}</span></h2><p class="listing-key">Listed dates: plain = verified · ≥ = earliest public evidence · ~ = estimate</p></div></div>${inventoryControls(candidates)}${boatTable(filtered)}</section>`;
 }
 
 function overview() {
