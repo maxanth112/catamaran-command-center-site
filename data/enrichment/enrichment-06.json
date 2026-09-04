@@ -1,0 +1,21 @@
+[
+  {
+    "boat_id": "katla",
+    "reviewed_at": "2026-09-04",
+    "completeness": 91,
+    "evidence_level": "live_listing",
+    "systems": {
+      "battery": {"summary": "Mixed-voltage lithium architecture: 2×200Ah Victron lithium at 24V (2024) plus 3×200Ah lithium at 12V (2023), with SmartShunt, Lynx distributor and Cerbo GX. Do not collapse this into a single Ah number because the voltage domains differ.", "status": "listing", "chemistry": "LiFePO4", "condition": "Recent banks, but mixed-voltage architecture needs wiring/BMS documentation and capacity testing."},
+      "solar_charging": {"summary": "6×550W = 3,300W solar; twin 115A engine alternators; Victron 48V 10k inverter plus Victron MultiPlus 12V 3k inverter", "status": "listing", "solar_w": 3300, "inverter_w": 10000},
+      "sails_rig": {"summary": "Maelstrom carbon mast, Mainfurl boom, Kevlar stays and complete standing rigging all new 2024; mainsail new 2024. Genoa is original, retained with new stays.", "status": "listing", "standing_rig_year": 2024, "mainsail_year": 2024, "headsail_year": 2018, "headsail_condition": "Original genoa; replacement horizon should be priced despite new rig."},
+      "engines_drives": {"summary": "Twin Volvo Penta D2-55, about 370–372h each; listing does not expose saildrive service/diaphragm history", "status": "listing", "engine_hours_port": 372, "engine_hours_starboard": 372, "engine_year": 2018},
+      "generator": {"summary": "Generator model/hours are not disclosed in the live listing despite the all-electric galley and large inverter architecture", "status": "unknown"},
+      "climate": {"summary": "Saloon and all cabins air-conditioned; electrical system is unusually large, but real battery-only A/C endurance is not documented", "status": "listing"},
+      "water": {"summary": "Aquabase 12V 60 L/h watermaker; new membrane and pump head 2025", "status": "listing", "watermaker_lph": 60, "watermaker_service_year": 2025},
+      "structure": {"summary": "One-owner / never-near-hurricane claim. 2023 steering/rudder upgrades: reinforced rudder stocks with fiberglass, rose-joint kit, new tiller arms, hydraulic actuator and steering pump. Reason and engineering documentation should be reviewed.", "status": "listing"},
+      "survey_docs": {"summary": "No recent independent survey or structural file reviewed yet", "status": "pending"},
+      "tax_title": {"summary": "Aruba-located; tax/duty/title status not clearly stated in live listing", "status": "unknown"}
+    },
+    "unknowns": ["Generator model/hours", "Saildrive service/diaphragm history", "Reason/engineering file for 2023 rudder-stock reinforcement", "Recent survey/moisture history", "Mixed-voltage lithium wiring/BMS documentation and capacity test", "Original genoa remaining life", "Tax/duty status"]
+  }
+]
