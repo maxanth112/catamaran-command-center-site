@@ -28,8 +28,8 @@ import {
   relativeValueRank,
   riskItems,
   sortBoats,
-} from './lib.mjs?v=20260903.11';
-import { sailingMethodology, sailingProfile } from './model-insights.mjs?v=20260903.11';
+} from './lib.mjs?v=20260903.12';
+import { sailingMethodology, sailingProfile } from './model-insights.mjs?v=20260903.12';
 
 const ROUTES = [
   ['overview', 'Overview'],
