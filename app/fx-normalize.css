@@ -4,3 +4,8 @@ label:has(> #currency),
 .inline-controls > .segmented {
   display: none !important;
 }
+
+.fx-note {
+  font-size: 12px;
+  color: var(--muted, #6b7280);
+}

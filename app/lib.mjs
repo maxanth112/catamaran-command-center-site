@@ -6,28 +6,38 @@ const BRAND_RULES = [
   ['Privilège', /privilege|privilège/i],
   ['Knysna', /knysna/i],
   ['Voyage', /voyage/i],
+  ['Catana', /catana/i],
+  ['Outremer', /outremer/i],
+  ['Seawind', /seawind/i],
+  ['Balance', /balance/i],
+  ['HH', /\bhh\s*\d/i],
 ];
 
 const LENGTH_RULES = [
   [50, /(?:lagoon\s*500|privilege\s*495|privilège\s*495)/i],
   [48, /(?:480|salina\s*48)/i],
+  [47, /catana\s*471?/i],
   [46, /(?:leopard\s*46|nautitech\s*46)/i],
-  [45, /(?:450f?|450\b)/i],
-  [44, /(?:orana\s*44|helia\s*44|leopard\s*44|lagoon\s*440)/i],
-  [42, /lagoon\s*42/i],
-  [41, /lipari\s*41/i],
+  [45, /(?:450f?|450\b|outremer\s*45)/i],
+  [44, /(?:orana\s*44|helia\s*44|leopard\s*44|lagoon\s*440|nautitech\s*44|balance\s*442|\bhh\s*44)/i],
+  [42, /(?:lagoon\s*42|catana\s*42)/i],
+  [41, /(?:lipari\s*41|seawind\s*1260)/i],
   [40, /(?:lagoon\s*400|lagoon\s*40\b)/i],
+  [38, /seawind\s*1160/i],
 ];
 
 // Presentation-only map coordinates. These deliberately stay outside the
 // canonical boat schema: they locate the named marina/area conservatively and
 // should not be read as the vessel's exact position.
 const LOCATION_RULES = [
+  [/lorain|cleveland|ohio/i, [41.48, -81.70]],
+  [/barrington|rhode island/i, [41.74, -71.31]],
   [/kemah|texas|\btx\b/i, [29.54, -95.02]],
   [/charleston|south carolina|\bsc\b/i, [32.78, -79.93]],
   [/st\.? augustine/i, [29.90, -81.31]],
   [/daytona/i, [29.21, -81.02]],
   [/riviera beach/i, [26.78, -80.06]],
+  [/vero beach/i, [27.64, -80.40]],
   [/^panama\b/i, [9.00, -79.52]],
   [/fort lauderdale|dania beach/i, [26.12, -80.14]],
   [/marsh harbour|abaco|bahama/i, [26.54, -77.06]],
@@ -40,6 +50,7 @@ const LOCATION_RULES = [
   [/road town|tortola|virgin gorda|\bbvi\b/i, [18.43, -64.62]],
   [/simpson bay|sint maarten/i, [18.04, -63.09]],
   [/saint lucia|st\.? lucia/i, [13.91, -60.98]],
+  [/pointe.?.pitre|guadeloupe/i, [16.24, -61.53]],
   [/le marin|martinique/i, [14.47, -60.87]],
   [/saint david|st\.? george|grenada|port louis/i, [12.05, -61.75]],
   [/chaguaramas|trinidad/i, [10.68, -61.64]],
@@ -70,11 +81,11 @@ export const STAGE_LABELS = {
 };
 
 export function activeBoats(boats) {
-  return boats.filter((boat) => boat.stage_bucket !== 'closed');
+  return boats.filter((boat) => boat.stage_bucket !== 'closed' && !/sold|withdrawn|under contract|under offer/i.test(boat.stage || ''));
 }
 
 export function isSeriousCandidate(boat) {
-  return boat.stage_bucket !== 'closed' && boat.tier === 'A' && boat.score >= 9.5;
+  return activeBoats([boat]).length === 1 && boat.tier === 'A' && boat.score >= 9.5;
 }
 
 export function priorityBoats(boats, n = 8) {
@@ -124,7 +135,7 @@ export function compactMoney(value, currency = 'USD') {
   if (!Number.isFinite(value)) return '—';
   const symbol = currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
   if (Math.abs(value) >= 1000) {
-    const amount = value / 1000;
+    const amount = Math.round((value / 1000) * 10) / 10;
     return `${symbol}${Number.isInteger(amount) ? amount : amount.toFixed(1)}k`;
   }
   return `${symbol}${Math.round(value)}`;
@@ -188,9 +199,9 @@ export function groupBy(items, key) {
 
 export function regionFor(boat) {
   const value = (boat.location || '').toLowerCase();
-  if (/bvi|tortola|virgin|grenada|martinique|le marin|bahama|abaco|panama|san blas|cura[cç]ao|aruba|st\. john|saint lucia|sint maarten|puerto rico|dominican|belize|guatemala|trinidad/.test(value)) return 'Caribbean';
+  if (/bvi|tortola|virgin|grenada|guadeloupe|pointe.?.pitre|martinique|le marin|bahama|abaco|panama|san blas|cura[cç]ao|aruba|st\. john|saint lucia|sint maarten|puerto rico|dominican|belize|guatemala|trinidad/.test(value)) return 'Caribbean';
   if (/spain|france|italy|cyprus|croatia|greece|barcelona|palermo|marseille|montenegro/.test(value)) return 'Mediterranean';
-  if (/florida|texas|maryland|annapolis|charleston|daytona|riviera beach|st\. augustine|fort lauderdale/.test(value)) return 'Continental US';
+  if (/florida|texas|ohio|cleveland|lorain|rhode island|barrington|maryland|annapolis|charleston|daytona|riviera beach|st\. augustine|fort lauderdale|vero beach/.test(value)) return 'Continental US';
   return 'Other';
 }
 
@@ -242,6 +253,13 @@ export function needsAttention(boat) {
   return ['max_decision', 'diligence', 'waiting'].includes(boat.stage_bucket);
 }
 
+export function needsOutreach(boat) {
+  const state = `${boat.stage ?? ''} ${boat.last_reached_out ?? ''}`.toLowerCase();
+  return boat.stage_bucket === 'watch'
+    && /not contacted|no public email|new lead/.test(state)
+    && !/intentionally not contacted/.test(state);
+}
+
 export function biggestRisk(boat, maxLength = 150) {
   const first = (boat.risks || 'No material risk logged.').split(/;|\.\s+/)[0].trim();
   return first.length > maxLength ? `${first.slice(0, maxLength - 1).trim()}…` : first;
@@ -249,7 +267,7 @@ export function biggestRisk(boat, maxLength = 150) {
 
 export function classifyRisk(text = '') {
   const value = text.toLowerCase();
-  if (/bulkhead|structur|delamin|core|crossbeam|compression|grounding|crack|moisture|blister/.test(value)) return { kind: 'structural', label: 'Structural / hull', severity: 'high' };
+  if (/bulkhead|\bstructural\b|delamin|\bcore\b|crossbeam|compression.post|grounding|\bcrack|moisture|blister/.test(value)) return { kind: 'structural', label: 'Structural / hull', severity: 'high' };
   if (/engine|saildrive|generator|genset|turbo|injector/.test(value)) return { kind: 'mechanical', label: 'Mechanical', severity: 'high' };
   if (/rig|sail|chainplate/.test(value)) return { kind: 'capex', label: 'Known capex', severity: 'medium' };
   if (/vat|tax|duty|title|import|citizen|resident/.test(value)) return { kind: 'transaction', label: 'Transaction', severity: 'medium' };
@@ -263,6 +281,12 @@ export function riskItems(boat) {
     .map((text) => text.trim().replace(/\.$/, ''))
     .filter(Boolean);
   return parts.slice(0, 7).map((text) => ({ text, ...classifyRisk(text) }));
+}
+
+export function dealBreakerRisk(boat) {
+  const materialIssue = /(?:crossbeam|bulkhead).*(?:repair|work|replacement|reinforcement|cause)|(?:repair|replacement|reinforcement).*(?:crossbeam|bulkhead)|port.hull core|delaminat|rudder recore|blistering|(?:grounding|collision|structural) damage/i;
+  const reassuring = /no (?:known|reported|disclosed|significant).*(?:structural|grounding|collision|casualty|damage)/i;
+  return riskItems(boat).find((risk) => materialIssue.test(risk.text) && !reassuring.test(risk.text)) ?? null;
 }
 
 function equipmentStatus(positiveText, riskText, positive, warning, missing) {
@@ -339,6 +363,7 @@ export function sortBoats(boats, key = 'score', direction = 'desc') {
     if (key === 'ask') return econ.ask ?? -Infinity;
     if (key === 'refit') return econ.refit ?? -Infinity;
     if (key === 'allIn') return econ.allIn ?? -Infinity;
+    if (key === 'allInPerFoot') return econ.allInPerFoot ?? -Infinity;
     if (key === 'location') return (boat.location || '').toLowerCase();
     if (key === 'status') return preciseStatus(boat).toLowerCase();
     if (key === 'lastReply') return boat.last_heard_from && boat.last_heard_from !== '—' ? boat.last_heard_from : '';

@@ -38,6 +38,8 @@
       fx_as_of: AS_OF,
     };
 
+    // The app infers refit currency from this display field. Rewrite only non-USD
+    // refit labels so converted numeric values are never rendered with a € or £ sign.
     if (nativeRefitCurrency !== 'USD' && boat.refit_display) {
       normalized.refit_display = `USD equivalent at ${nativeRefitCurrency}/USD ${FX[nativeRefitCurrency].toFixed(2)} · native ${nativeRefitCurrency} estimate retained in source data`;
     }
