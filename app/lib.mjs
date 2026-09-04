@@ -146,12 +146,17 @@ export function midpoint(low, high) {
   return Number.isFinite(high) ? high : Number.isFinite(low) ? low : null;
 }
 
+export function amountFromDisplay(display) {
+  const match = String(display ?? '').replaceAll(',', '').match(/(?:[$€£]\s*)?(\d{5,}(?:\.\d+)?)/);
+  return match ? Number(match[1]) : null;
+}
+
 export function economics(boat) {
   const currency = inferCurrency(boat);
   const refitCurrency = inferRefitCurrency(boat);
-  const ask = Number.isFinite(boat.ask_value) ? boat.ask_value : null;
+  const ask = Number.isFinite(boat.ask_value) ? boat.ask_value : amountFromDisplay(boat.ask_display);
   const refit = midpoint(boat.refit_low, boat.refit_high);
-  const allIn = midpoint(boat.all_in_low, boat.all_in_high);
+  const allIn = Number.isFinite(boat.all_in_high) ? boat.all_in_high : midpoint(boat.all_in_low, boat.all_in_high);
   const length = deriveLength(boat.model);
   return {
     currency,
@@ -164,6 +169,16 @@ export function economics(boat) {
     allInPerFoot: allIn && length ? allIn / length : null,
     refitBurden: ask && refit && currency === refitCurrency ? refit / ask : null,
   };
+}
+
+export function costComposition(boat) {
+  const { ask, refit, allIn } = economics(boat);
+  if (!Number.isFinite(allIn) || !Number.isFinite(refit)) return null;
+  const knownAsk = Number.isFinite(ask) ? ask : null;
+  const other = knownAsk === null ? 0 : Math.max(0, allIn - knownAsk - refit);
+  const purchase = knownAsk === null ? Math.max(0, allIn - refit) : Math.max(0, allIn - refit - other);
+  const assumedDiscount = knownAsk === null ? 0 : Math.max(0, knownAsk - purchase);
+  return { purchase, ask: knownAsk, refit, other, allIn, assumedDiscount };
 }
 
 export function median(values) {

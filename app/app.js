@@ -6,6 +6,7 @@ import {
   boatIdentity,
   compactMoney,
   conversationImpact,
+  costComposition,
   dealBreakerRisk,
   deriveBrand,
   deriveLength,
@@ -27,8 +28,8 @@ import {
   relativeValueRank,
   riskItems,
   sortBoats,
-} from './lib.mjs?v=20260903.9';
-import { sailingMethodology, sailingProfile } from './model-insights.mjs?v=20260903.9';
+} from './lib.mjs?v=20260903.10';
+import { sailingMethodology, sailingProfile } from './model-insights.mjs?v=20260903.10';
 
 const ROUTES = [
   ['overview', 'Overview'],
@@ -239,23 +240,27 @@ function marketScatter() {
   const y = (value) => height - inset.bottom - ((value - yMin) / (yMax - yMin || 1)) * (height - inset.top - inset.bottom);
   const xTicks = Array.from({ length: 5 }, (_, index) => xMin + ((xMax - xMin) * index) / 4);
   const yTicks = Array.from({ length: 5 }, (_, index) => Math.round(yMin + ((yMax - yMin) * index) / 4));
-  return `<div class="chart-wrap"><svg class="scatter" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="scatter-title scatter-desc">
-    <title id="scatter-title">Age, size and total cost</title><desc id="scatter-desc">Boats farther left cost less, boats higher up are newer, larger circles represent longer boats, and darker circles have higher working scores. Focus a circle for boat details.</desc>
+  const plots = candidates.map((boat) => {
+    const econ = economics(boat);
+    const px = x(econ.allIn);
+    const py = y(boat.year);
+    const radius = 5.5 + Math.max(0, (econ.length || 40) - 40) * .42;
+    const tone = boat.score >= 9 ? 'top' : boat.score >= 8 ? 'strong' : 'base';
+    const horizontal = px > width - 250 ? 'align-left' : 'align-right';
+    const vertical = py < 126 ? 'below' : 'above';
+    const label = `${boatIdentity(boat)}. Ask ${compactMoney(econ.ask)}. Refit ${compactMoney(econ.refit)}. Estimated all-in ${compactMoney(econ.allIn)}. Working score ${boat.score.toFixed(1)}.`;
+    return {
+      point: `<g class="scatter-point ${tone}" transform="translate(${px.toFixed(1)} ${py.toFixed(1)})" data-boat="${boat.id}" data-viz-key="${boat.id}" tabindex="0" role="button" aria-label="${attr(label)}"><circle r="${radius}"></circle></g>`,
+      tooltip: `<div class="viz-float ${horizontal} ${vertical}" data-viz-tip="${boat.id}" style="--viz-x:${((px / width) * 100).toFixed(2)}%;--viz-y:${((py / height) * 100).toFixed(2)}%"><div class="viz-card"><strong>${boat.year} ${esc(boat.model)}</strong><span>${econ.length ? `${econ.length} ft` : 'Length unknown'} · priority ${boat.score.toFixed(1)}</span><div><small>Ask<b>${compactMoney(econ.ask)}</b></small><small>Refit<b>${compactMoney(econ.refit)}</b></small><small>All-in<b>${compactMoney(econ.allIn)}</b></small></div></div></div>`,
+    };
+  });
+  return `<div class="chart-wrap"><div class="scatter-stage"><svg class="scatter" viewBox="0 0 ${width} ${height}" role="group" aria-label="Age, size and total cost" aria-describedby="scatter-desc">
+    <desc id="scatter-desc">Boats farther left cost less, boats higher up are newer, larger circles represent longer boats, and darker circles have higher working scores. Focus a circle for boat details.</desc>
     ${yTicks.map((tick) => `<g><line class="grid-line" x1="${inset.left}" x2="${width - inset.right}" y1="${y(tick)}" y2="${y(tick)}"/><text class="axis-label" x="${inset.left - 9}" y="${y(tick) + 4}" text-anchor="end">${tick}</text></g>`).join('')}
     ${xTicks.map((tick) => `<g><line class="grid-line vertical" x1="${x(tick)}" x2="${x(tick)}" y1="${inset.top}" y2="${height - inset.bottom}"/><text class="axis-label" x="${x(tick)}" y="${height - 18}" text-anchor="middle">${compactMoney(tick)}</text></g>`).join('')}
     <text class="axis-title" x="${width / 2}" y="${height - 2}" text-anchor="middle">Estimated all-in cost</text>
-    ${candidates.map((boat) => {
-      const econ = economics(boat);
-      const px = x(econ.allIn);
-      const py = y(boat.year);
-      const radius = 5.5 + Math.max(0, (econ.length || 40) - 40) * .42;
-      const tone = boat.score >= 9 ? 'top' : boat.score >= 8 ? 'strong' : 'base';
-      const tooltipX = px > width - 250 ? -244 : radius + 8;
-      const tooltipY = py < 126 ? 8 : -123;
-      const label = `${boatIdentity(boat)}. Ask ${compactMoney(econ.ask)}. Refit ${compactMoney(econ.refit)}. Estimated all-in ${compactMoney(econ.allIn)}. Working score ${boat.score.toFixed(1)}.`;
-      return `<g class="scatter-point ${tone}" transform="translate(${px.toFixed(1)} ${py.toFixed(1)})" data-boat="${boat.id}" tabindex="0" role="button" aria-label="${attr(label)}"><circle r="${radius}"></circle><foreignObject class="viz-tooltip" x="${tooltipX}" y="${tooltipY}" width="236" height="116"><div xmlns="http://www.w3.org/1999/xhtml" class="viz-card"><strong>${boat.year} ${esc(boat.model)}</strong><span>${econ.length ? `${econ.length} ft` : 'Length unknown'} · score ${boat.score.toFixed(1)}</span><div><small>Ask<b>${compactMoney(econ.ask)}</b></small><small>Refit<b>${compactMoney(econ.refit)}</b></small><small>All-in<b>${compactMoney(econ.allIn)}</b></small></div></div></foreignObject></g>`;
-    }).join('')}
-  </svg><div class="chart-legend"><span><i class="dot top"></i>9+ score</span><span><i class="dot strong"></i>8–8.9</span><span><i class="dot"></i>Below 8</span><span><i class="bubble-key"></i>Size = length</span></div></div>`;
+    ${plots.map(({ point }) => point).join('')}
+  </svg><div class="viz-layer">${plots.map(({ tooltip }) => tooltip).join('')}</div></div><div class="chart-legend"><span><i class="dot top"></i>9+ score</span><span><i class="dot strong"></i>8–8.9</span><span><i class="dot"></i>Below 8</span><span><i class="bubble-key"></i>Size = length</span></div></div>`;
 }
 
 function cleanNextStep(value = '') {
@@ -321,30 +326,35 @@ function sortHeader(key, label, align = '') {
   return `<th class="${align}" aria-sort="${ariaSort}"><button data-sort="${key}">${label}<span aria-hidden="true">${active ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕'}</span></button></th>`;
 }
 
-function tableCostBar(boat, scale) {
+function tableCostBar(boat) {
   const econ = economics(boat);
-  if (!Number.isFinite(econ.ask)) return '<span class="data-missing">Price unavailable</span>';
-  const askWidth = Math.min(100, (econ.ask / scale) * 100);
-  const refitWidth = Number.isFinite(econ.refit) ? Math.min(100 - askWidth, (econ.refit / scale) * 100) : 0;
-  const label = `${compactMoney(econ.ask, econ.currency)} purchase${Number.isFinite(econ.refit) ? ` + ${compactMoney(econ.refit, econ.refitCurrency)} refit` : ''}`;
-  return `<span class="table-cost" title="${attr(`${boat.ask_display}; refit ${boat.refit_display}`)}"><span class="table-cost-track" aria-label="${attr(label)}"><i class="ask" style="width:${askWidth}%"></i><i class="refit" style="width:${refitWidth}%"></i></span><small><span>${compactMoney(econ.ask, econ.currency)}</span>${Number.isFinite(econ.refit) ? `<span>+ ${compactMoney(econ.refit, econ.refitCurrency)}</span>` : ''}</small></span>`;
+  const parts = costComposition(boat);
+  if (!parts) return '<span class="data-missing">Estimate incomplete</span>';
+  const purchaseWidth = (parts.purchase / parts.allIn) * 100;
+  const refitWidth = (parts.refit / parts.allIn) * 100;
+  const otherWidth = (parts.other / parts.allIn) * 100;
+  const purchaseLabel = `${compactMoney(parts.purchase, econ.currency)} ${parts.assumedDiscount > 1000 ? 'buy basis' : 'purchase'}`;
+  const labels = [purchaseLabel, `${compactMoney(parts.refit, econ.refitCurrency)} refit`];
+  if (parts.other > 1000) labels.push(`${compactMoney(parts.other, econ.currency)} tax / closing / reserve`);
+  const discount = parts.assumedDiscount > 1000 ? ` Current ask is ${compactMoney(parts.ask, econ.currency)}; the all-in estimate assumes about ${compactMoney(parts.assumedDiscount, econ.currency)} of negotiation.` : '';
+  const explanation = `Estimated all-in composition: ${labels.join(', ')}.${discount} Source estimate: ${boat.all_in_display}`;
+  return `<span class="table-cost" title="${attr(explanation)}"><span class="table-cost-track" aria-label="${attr(explanation)}"><i class="ask" style="width:${purchaseWidth}%"></i><i class="refit" style="width:${refitWidth}%"></i><i class="other" style="width:${otherWidth}%"></i></span><small><span>${compactMoney(parts.purchase, econ.currency)}${parts.assumedDiscount > 1000 ? ' basis' : ''}</span><span>+ ${compactMoney(parts.refit, econ.refitCurrency)}</span>${parts.other > 1000 ? `<span>+ ${compactMoney(parts.other, econ.currency)}</span>` : ''}</small></span>`;
 }
 
 function boatTable(list) {
   const sorted = sortBoats(list, state.sortKey, state.sortDir);
   if (!sorted.length) return '<div class="empty-state"><strong>No boats match these filters</strong><p>Clear a preset or widen the numeric range.</p><button class="button" data-reset-filters>Reset filters</button></div>';
-  const scale = Math.max(...sorted.map((boat) => economics(boat).allIn).filter(Number.isFinite), 1);
-  return `<div class="table-scroll"><table class="boat-table"><thead><tr><th class="select-column"><span class="sr-only">Select</span></th>${sortHeader('boat', 'Boat')}${sortHeader('length', 'Length', 'number')}${sortHeader('ask', 'Purchase + refit')}${sortHeader('allIn', 'Est. all-in', 'number')}${sortHeader('allInPerFoot', 'All-in / ft', 'number')}${sortHeader('score', 'Priority', 'number')}<th>Design profile</th>${sortHeader('location', 'Location')}${sortHeader('status', 'Diligence') }<th>Hull / structural</th>${sortHeader('lastReply', 'Last reply')}</tr></thead><tbody>${sorted.map((boat) => {
+  return `<div class="table-scroll"><table class="boat-table"><colgroup><col class="col-select"><col class="col-boat"><col class="col-cost"><col class="col-all-in"><col class="col-per-foot"><col class="col-priority"><col class="col-profile"><col class="col-location"><col class="col-diligence"><col class="col-risk"><col class="col-reply"></colgroup><thead><tr><th class="select-column"><span class="sr-only">Select</span></th>${sortHeader('boat', 'Boat')}${sortHeader('ask', 'All-in composition')}${sortHeader('allIn', 'Est. all-in', 'number')}${sortHeader('allInPerFoot', 'All-in / ft', 'number')}${sortHeader('score', 'Priority', 'number')}<th>Design profile</th>${sortHeader('location', 'Location')}${sortHeader('status', 'Diligence') }<th>Major risk</th>${sortHeader('lastReply', 'Last reply')}</tr></thead><tbody>${sorted.map((boat) => {
     const econ = economics(boat);
     const sailing = sailingProfile(boat.model);
     const latest = latestConversation(boat.id, visibleConversations);
     const structural = dealBreakerRisk(boat);
     const selected = state.selected.has(boat.id);
     return `<tr class="boat-row ${selected ? 'selected' : ''}" data-boat="${boat.id}" tabindex="0">
-      <td class="select-column" data-label="Select"><label class="check-control" title="Add to comparison"><input type="checkbox" data-select="${boat.id}" ${selected ? 'checked' : ''} aria-label="Compare ${attr(boatIdentity(boat))}"><span></span></label></td><td data-label="Boat">${identity(boat)}</td><td class="number" data-label="Length"><strong>${econ.length ? `${econ.length} ft` : '—'}</strong></td>
-      <td data-label="Purchase + refit">${tableCostBar(boat, scale)}</td><td class="number all-in-cell" data-label="Est. all-in">${planningMoney(econ.allIn, econ.currency, boat.all_in_display)}</td><td class="number" data-label="All-in / ft"><span class="per-foot">${Number.isFinite(econ.allInPerFoot) ? `${money(Math.round(econ.allInPerFoot), econ.currency)}<small>/ft</small>` : '—'}</span></td>
+      <td class="select-column" data-label="Select"><label class="check-control" title="Add to comparison"><input type="checkbox" data-select="${boat.id}" ${selected ? 'checked' : ''} aria-label="Compare ${attr(boatIdentity(boat))}"><span></span></label></td><td data-label="Boat">${identity(boat)}</td>
+      <td data-label="All-in composition">${tableCostBar(boat)}</td><td class="number all-in-cell" data-label="Est. all-in">${planningMoney(econ.allIn, econ.currency, boat.all_in_display)}</td><td class="number" data-label="All-in / ft"><span class="per-foot">${Number.isFinite(econ.allInPerFoot) ? `${money(Math.round(econ.allInPerFoot), econ.currency)}<small>/ft</small>` : '—'}</span></td>
       <td class="number" data-label="Priority">${scoreChip(boat.score)}</td><td data-label="Design profile">${profileMini(sailing)}</td>
-      <td data-label="Location"><span class="location-cell">${esc(boat.location)}</span><small class="cell-note">${regionFor(boat)}</small></td><td data-label="Diligence">${statusBadge(boat, true)}</td><td data-label="Hull / structural">${structural ? `<span class="critical-risk" title="${attr(structural.text)}"><i aria-hidden="true"></i>${esc(truncate(structural.text, 74))}</span>` : '<span class="data-missing">—</span>'}</td>
+      <td data-label="Location"><span class="location-cell">${esc(boat.location)}</span><small class="cell-note">${regionFor(boat)}</small></td><td data-label="Diligence">${statusBadge(boat, true)}</td><td data-label="Major risk">${structural ? `<span class="critical-risk" title="${attr(structural.text)}"><i aria-hidden="true"></i>${esc(truncate(structural.text, 74))}</span>` : '<span class="data-missing">—</span>'}</td>
       <td data-label="Last reply"><span class="reply-date">${relativeDate(boat.last_heard_from, generatedDate)}</span>${latest ? `<small class="reply-preview" title="${attr(latest.facts)}">${esc(truncate(latest.facts, 68))}</small>` : '<small class="cell-note">No linked reply</small>'}</td></tr>`;
   }).join('')}</tbody></table></div>`;
 }
@@ -461,7 +471,7 @@ function geographyMap(list) {
   }
   markers.forEach((group) => group.boats.sort((a, b) => b.score - a.score));
   const regions = Object.entries(groupBy(list, regionFor)).sort((a, b) => b[1].length - a[1].length);
-  return `<section class="surface geo-map-surface"><div class="panel-heading"><div><h2>Locations</h2></div><div class="map-region-summary">${regions.map(([region, boatsInRegion]) => `<button data-map-region="${attr(region)}" class="${state.mapRegion === region ? 'active' : ''}" aria-pressed="${state.mapRegion === region}"><strong>${boatsInRegion.length}</strong> ${esc(region)}</button>`).join('')}${state.mapLabel ? `<button class="map-clear" data-clear-map>${esc(state.mapLabel)} <span aria-hidden="true">×</span></button>` : ''}</div></div><div class="geo-map-wrap"><svg class="geo-map" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="geo-map-title geo-map-desc"><title id="geo-map-title">Active catamaran locations across the Atlantic, Caribbean and Mediterranean</title><desc id="geo-map-desc">Approximate location markers sized by the number of active tracked boats. Select a marker or region to filter the fleet table.</desc>
+  return `<section class="surface geo-map-surface"><div class="panel-heading"><div><h2>Locations</h2></div><div class="map-region-summary">${regions.map(([region, boatsInRegion]) => `<button data-map-region="${attr(region)}" class="${state.mapRegion === region ? 'active' : ''}" aria-pressed="${state.mapRegion === region}"><strong>${boatsInRegion.length}</strong> ${esc(region)}</button>`).join('')}${state.mapLabel ? `<button class="map-clear" data-clear-map>${esc(state.mapLabel)} <span aria-hidden="true">×</span></button>` : ''}</div></div><div class="geo-map-wrap"><svg class="geo-map" viewBox="0 0 ${width} ${height}" role="group" aria-label="Active catamaran locations across the Atlantic, Caribbean and Mediterranean" aria-describedby="geo-map-desc"><desc id="geo-map-desc">Approximate location markers sized by the number of active tracked boats. Select a marker or region to filter the fleet table.</desc>
     ${[-90, -60, -30, 0, 30].map((lon) => { const point = project({ lat: bounds.south, lon }); return `<line class="map-grid" x1="${point.x}" x2="${point.x}" y1="0" y2="${height}"/>`; }).join('')}
     ${[10, 20, 30, 40, 50].map((lat) => { const point = project({ lat, lon: bounds.west }); return `<line class="map-grid" x1="0" x2="${width}" y1="${point.y}" y2="${point.y}"/>`; }).join('')}
     ${landMasses.map((points) => `<path class="map-land" d="${pathFor(points)}"/>`).join('')}
@@ -671,6 +681,16 @@ function openBoat(id) {
 }
 
 function bindEvents() {
+  const vizTips = new Map([...app.querySelectorAll('[data-viz-tip]')].map((tip) => [tip.dataset.vizTip, tip]));
+  app.querySelectorAll('[data-viz-key]').forEach((point) => {
+    const tip = vizTips.get(point.dataset.vizKey);
+    const show = () => tip?.classList.add('active');
+    const hide = () => tip?.classList.remove('active');
+    point.addEventListener('pointerenter', show);
+    point.addEventListener('pointerleave', hide);
+    point.addEventListener('focus', show);
+    point.addEventListener('blur', hide);
+  });
   app.querySelectorAll('[data-preset]').forEach((button) => button.addEventListener('click', () => { applyPreset(button.dataset.preset); render(); }));
   app.querySelectorAll('[data-sort]').forEach((button) => button.addEventListener('click', () => {
     const key = button.dataset.sort;
