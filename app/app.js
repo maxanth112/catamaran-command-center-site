@@ -28,8 +28,8 @@ import {
   relativeValueRank,
   riskItems,
   sortBoats,
-} from './lib.mjs?v=20260903.10';
-import { sailingMethodology, sailingProfile } from './model-insights.mjs?v=20260903.10';
+} from './lib.mjs?v=20260903.11';
+import { sailingMethodology, sailingProfile } from './model-insights.mjs?v=20260903.11';
 
 const ROUTES = [
   ['overview', 'Overview'],
@@ -66,6 +66,9 @@ const state = {
   sortKey: 'score', sortDir: 'desc', preset: 'all', mapBoatIds: null, mapRegion: 'all', mapLabel: '',
   selected: new Set(), notice: '',
 };
+
+const MAP_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+let fleetMap = null;
 
 const app = document.querySelector('#app');
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
@@ -409,86 +412,135 @@ function conversationsView() {
 }
 
 function geographyMap(list) {
-  const width = 1120;
-  const height = 300;
-  const bounds = { west: -105, east: 38, north: 55, south: 5 };
-  const project = ({ lat, lon }) => ({
-    x: ((lon - bounds.west) / (bounds.east - bounds.west)) * width,
-    y: ((bounds.north - lat) / (bounds.north - bounds.south)) * height,
-  });
-  const landMasses = [
-    [[-105, 55], [-56, 55], [-58, 51], [-64, 47], [-69, 44], [-73, 41], [-76, 36], [-80, 30], [-80, 25], [-82, 24], [-84, 29], [-91, 29], [-97, 26], [-105, 29]],
-    [[-105, 27], [-97, 25], [-92, 20], [-87, 16], [-83, 9], [-77, 8], [-80, 13], [-85, 17], [-91, 19], [-99, 23]],
-    [[-82, 12], [-75, 11], [-69, 12], [-61, 10], [-52, 5], [-82, 5]],
-    [[-12, 55], [38, 55], [38, 35], [33, 35], [26, 38], [19, 40], [15, 43], [9, 44], [3, 43], [-1, 45], [-8, 44], [-10, 50]],
-    [[-17, 36], [-5, 35], [10, 37], [28, 33], [38, 31], [38, 5], [-17, 5], [-16, 17], [-17, 27]],
-  ];
-  const pathFor = (points) => `${points.map(([lon, lat], index) => { const point = project({ lat, lon }); return `${index ? 'L' : 'M'}${point.x.toFixed(1)},${point.y.toFixed(1)}`; }).join('')}Z`;
-  const shortPlace = (locations) => {
-    const value = [...locations].join(' ').toLowerCase();
-    if (/grenada|saint george|st\. george|port louis|saint david/.test(value) && /trinidad|chaguaramas/.test(value)) return 'Southern Caribbean';
-    if (/bvi|tortola|virgin gorda|road town|hodge creek/.test(value) && /usvi|st\.? thomas|st\.? john|cruz bay/.test(value)) return 'Virgin Islands';
-    if (/fort lauderdale|dania beach|riviera beach|daytona|st\.? augustine/.test(value) && [...locations].length > 1) return 'Florida';
-    if (/bvi|tortola|virgin gorda|road town|hodge creek/.test(value)) return 'BVI';
-    if (/grenada|saint george|st\. george|port louis|saint david/.test(value)) return 'Grenada';
-    if (/fort lauderdale|dania beach/.test(value)) return 'Fort Lauderdale';
-    if (/st\.? augustine/.test(value)) return 'St. Augustine';
-    if (/martinique|le marin/.test(value)) return 'Martinique';
-    if (/puerto rico|fajardo/.test(value)) return 'Puerto Rico';
-    if (/cura[cç]ao|willemstad/.test(value)) return 'Curaçao';
-    return [...locations][0].replace(/,.*$/, '');
-  };
-  const markerGroups = new Map();
-  for (const boat of list) {
+  const regions = Object.entries(groupBy(list, regionFor)).sort((a, b) => b[1].length - a[1].length);
+  return `<section class="surface geo-map-surface"><div class="panel-heading"><div><h2>Locations</h2></div><div class="map-region-summary">${regions.map(([region, boatsInRegion]) => `<button data-map-region="${attr(region)}" class="${state.mapRegion === region ? 'active' : ''}" aria-pressed="${state.mapRegion === region}"><strong>${boatsInRegion.length}</strong> ${esc(region)}</button>`).join('')}${state.mapLabel ? `<button class="map-clear" data-clear-map>${esc(state.mapLabel)} <span aria-hidden="true">×</span></button>` : ''}</div></div><div class="geo-map-wrap"><div id="fleet-map" class="fleet-map" role="application" aria-label="Interactive map of active catamaran listing locations"></div></div><p class="map-note">Click a pin or region to zoom and filter the fleet · pins use the listed city or marina, not live AIS/GPS positions.</p></section>`;
+}
+
+function mapPlaceLabel(locations) {
+  const names = [...new Set(locations.map((location) => location.replace(/,.*$/, '').trim()))];
+  if (names.length <= 2) return names.join(' · ');
+  return `${names[0]} + ${names.length - 1} nearby`;
+}
+
+function initFleetMap() {
+  const container = document.getElementById('fleet-map');
+  if (!container) return;
+  if (!window.L) {
+    container.innerHTML = '<div class="map-load-error"><strong>Interactive map unavailable</strong><span>Location filters and the fleet table still work.</span></div>';
+    return;
+  }
+  let mapBoats = liveBoats;
+  if (state.mapBoatIds?.length) {
+    const selectedIds = new Set(state.mapBoatIds);
+    mapBoats = mapBoats.filter((boat) => selectedIds.has(boat.id));
+  } else if (state.mapRegion !== 'all') {
+    mapBoats = mapBoats.filter((boat) => regionFor(boat) === state.mapRegion);
+  }
+  const groups = new Map();
+  for (const boat of mapBoats) {
     const coordinates = locationCoordinates(boat.location);
     if (!coordinates) continue;
-    const key = `${coordinates.lat.toFixed(1)},${coordinates.lon.toFixed(1)}`;
-    if (!markerGroups.has(key)) markerGroups.set(key, { coordinates, boats: [], locations: new Set() });
-    const group = markerGroups.get(key);
+    const key = `${coordinates.lat.toFixed(3)},${coordinates.lon.toFixed(3)}`;
+    if (!groups.has(key)) groups.set(key, { coordinates, boats: [], locations: [] });
+    const group = groups.get(key);
     group.boats.push(boat);
-    group.locations.add(boat.location);
+    group.locations.push(boat.location);
   }
-  const markers = [];
-  for (const group of markerGroups.values()) {
-    const point = project(group.coordinates);
-    const nearby = markers.find((candidate) => {
-      const candidatePoint = project(candidate.coordinates);
-      return regionFor(candidate.boats[0]) === regionFor(group.boats[0])
-        && Math.hypot(candidatePoint.x - point.x, candidatePoint.y - point.y) < 18;
+  fleetMap = window.L.map(container, {
+    zoomControl: true,
+    scrollWheelZoom: true,
+    doubleClickZoom: true,
+    touchZoom: true,
+    boxZoom: true,
+    keyboard: true,
+    zoomSnap: .25,
+    minZoom: 2,
+  });
+  window.L.tileLayer(MAP_TILE_URL, {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(fleetMap);
+  const bounds = [];
+  for (const group of groups.values()) {
+    group.boats.sort((a, b) => b.score - a.score);
+    const count = group.boats.length;
+    const place = mapPlaceLabel(group.locations);
+    const size = count > 9 ? 38 : count > 1 ? 32 : 18;
+    const selected = state.mapBoatIds?.some((id) => group.boats.some((boat) => boat.id === id));
+    const icon = window.L.divIcon({
+      className: 'fleet-marker-icon',
+      html: `<span class="fleet-marker-dot ${count > 1 ? 'cluster' : ''} ${selected ? 'selected' : ''}">${count > 1 ? `<span aria-hidden="true">${count}</span>` : ''}<span class="sr-only">${esc(place)}: ${count} active listing${count === 1 ? '' : 's'}</span></span>`,
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
     });
-    if (nearby) {
-      const existingCount = nearby.boats.length;
-      const addedCount = group.boats.length;
-      nearby.coordinates = {
-        lat: ((nearby.coordinates.lat * existingCount) + (group.coordinates.lat * addedCount)) / (existingCount + addedCount),
-        lon: ((nearby.coordinates.lon * existingCount) + (group.coordinates.lon * addedCount)) / (existingCount + addedCount),
-      };
-      nearby.boats.push(...group.boats);
-      group.locations.forEach((location) => nearby.locations.add(location));
-    } else {
-      markers.push({ ...group, boats: [...group.boats], locations: new Set(group.locations) });
-    }
+    const marker = window.L.marker([group.coordinates.lat, group.coordinates.lon], {
+      icon,
+      keyboard: true,
+      alt: `${place}: ${count} active listing${count === 1 ? '' : 's'}`,
+    }).addTo(fleetMap);
+    const markerElement = marker.getElement();
+    markerElement?.setAttribute('aria-label', `${place}: ${count} active listing${count === 1 ? '' : 's'}. Select to zoom and filter the fleet.`);
+    const boatsMarkup = group.boats.map((boat) => {
+      const boatEcon = economics(boat);
+      return `<div class="map-boat-row"><span><strong>${boat.year} ${esc(boat.model)}</strong><small>${boatEcon.length ? `${boatEcon.length} ft` : 'Length unknown'} · ${compactMoney(boatEcon.allIn)} all-in</small></span><b aria-label="Priority ${boat.score.toFixed(1)}">${boat.score.toFixed(1)}</b></div>`;
+    }).join('');
+    marker.bindTooltip(`<div class="leaflet-boat-card"><header><strong>${esc(place)}</strong><span>${count} active listing${count === 1 ? '' : 's'}</span></header><div class="map-boat-list">${boatsMarkup}</div></div>`, {
+      className: 'fleet-map-tooltip',
+      direction: 'auto',
+      offset: [0, -(size / 2 + 5)],
+      opacity: 1,
+    });
+    const selectGroup = () => {
+      setTimeout(() => {
+        state.mapBoatIds = group.boats.map((boat) => boat.id);
+        state.mapRegion = 'all';
+        state.mapLabel = place;
+        state.region = 'all';
+        state.preset = 'custom';
+        render();
+      }, 0);
+    };
+    marker.on('click', selectGroup);
+    marker.on('keydown', (event) => {
+      const key = event.originalEvent?.key;
+      if (key !== 'Enter' && key !== ' ') return;
+      event.originalEvent.preventDefault();
+      selectGroup();
+    });
+    bounds.push([group.coordinates.lat, group.coordinates.lon]);
   }
-  markers.forEach((group) => group.boats.sort((a, b) => b.score - a.score));
-  const regions = Object.entries(groupBy(list, regionFor)).sort((a, b) => b[1].length - a[1].length);
-  return `<section class="surface geo-map-surface"><div class="panel-heading"><div><h2>Locations</h2></div><div class="map-region-summary">${regions.map(([region, boatsInRegion]) => `<button data-map-region="${attr(region)}" class="${state.mapRegion === region ? 'active' : ''}" aria-pressed="${state.mapRegion === region}"><strong>${boatsInRegion.length}</strong> ${esc(region)}</button>`).join('')}${state.mapLabel ? `<button class="map-clear" data-clear-map>${esc(state.mapLabel)} <span aria-hidden="true">×</span></button>` : ''}</div></div><div class="geo-map-wrap"><svg class="geo-map" viewBox="0 0 ${width} ${height}" role="group" aria-label="Active catamaran locations across the Atlantic, Caribbean and Mediterranean" aria-describedby="geo-map-desc"><desc id="geo-map-desc">Approximate location markers sized by the number of active tracked boats. Select a marker or region to filter the fleet table.</desc>
-    ${[-90, -60, -30, 0, 30].map((lon) => { const point = project({ lat: bounds.south, lon }); return `<line class="map-grid" x1="${point.x}" x2="${point.x}" y1="0" y2="${height}"/>`; }).join('')}
-    ${[10, 20, 30, 40, 50].map((lat) => { const point = project({ lat, lon: bounds.west }); return `<line class="map-grid" x1="0" x2="${width}" y1="${point.y}" y2="${point.y}"/>`; }).join('')}
-    ${landMasses.map((points) => `<path class="map-land" d="${pathFor(points)}"/>`).join('')}
-    ${markers.map((group) => {
-      const point = project(group.coordinates);
-      const count = group.boats.length;
-      const radius = Math.min(15, 5.5 + Math.sqrt(count) * 2.2);
-      const place = shortPlace(group.locations);
-      const top = group.boats[0];
-      const econ = economics(top);
-      const tooltipX = point.x > width - 252 ? -246 : radius + 8;
-      const tooltipY = point.y < 124 ? 8 : -118;
-      const label = `${place}: ${count} active boat${count === 1 ? '' : 's'}. Filter the fleet to this location.`;
-      const selected = state.mapBoatIds?.some((id) => group.boats.some((boat) => boat.id === id));
-      return `<g class="map-marker ${selected ? 'selected' : ''}" transform="translate(${point.x.toFixed(1)} ${point.y.toFixed(1)})" data-map-boats="${group.boats.map((boat) => boat.id).join(',')}" data-map-label="${attr(place)}" tabindex="0" role="button" aria-label="${attr(label)}"><circle r="${radius}"></circle>${count > 1 ? `<text class="map-marker-count" text-anchor="middle" y="3">${count}</text>` : ''}<foreignObject class="viz-tooltip" x="${tooltipX}" y="${tooltipY}" width="238" height="111"><div xmlns="http://www.w3.org/1999/xhtml" class="viz-card map-viz-card"><strong>${esc(place)}</strong><span>${count} active boat${count === 1 ? '' : 's'} · top candidate</span><div><small>${top.year} ${esc(top.model)}<b>${econ.length ? `${econ.length} ft` : '—'}</b></small><small>All-in<b>${compactMoney(econ.allIn)}</b></small><small>Priority<b>${top.score.toFixed(1)}</b></small></div></div></foreignObject></g>`;
-    }).join('')}
-  </svg></div><p class="map-note">Select a marker or region to filter the fleet · approximate marina areas, not live vessel positions.</p></section>`;
+  const homeControl = window.L.control({ position: 'topleft' });
+  homeControl.onAdd = () => {
+    const button = window.L.DomUtil.create('button', 'fleet-map-home leaflet-control');
+    button.type = 'button';
+    button.title = 'Show all tracked locations';
+    button.setAttribute('aria-label', 'Show all tracked locations');
+    button.innerHTML = '<svg aria-hidden="true" viewBox="0 0 20 20"><path d="m3.5 9 6.5-5.5L16.5 9v7H12v-4H8v4H3.5Z"/></svg>';
+    window.L.DomEvent.disableClickPropagation(button);
+    window.L.DomEvent.on(button, 'click', (event) => {
+      window.L.DomEvent.stop(event);
+      if (state.mapBoatIds?.length || state.mapRegion !== 'all') {
+        state.mapBoatIds = null;
+        state.mapRegion = 'all';
+        state.mapLabel = '';
+        state.region = 'all';
+        state.preset = 'custom';
+        render();
+        return;
+      }
+      if (bounds.length) fleetMap.fitBounds(bounds, { padding: [36, 36], maxZoom: 4.25 });
+    });
+    return button;
+  };
+  homeControl.addTo(fleetMap);
+  if (!bounds.length) {
+    fleetMap.setView([18, -66], 4);
+  } else if (state.mapBoatIds?.length && bounds.length === 1) {
+    fleetMap.setView(bounds[0], 10);
+  } else {
+    fleetMap.fitBounds(bounds, { padding: [36, 36], maxZoom: state.mapRegion === 'all' ? 4.25 : 7 });
+  }
+  requestAnimationFrame(() => fleetMap?.invalidateSize());
 }
 
 function layoutSummary(boat) {
@@ -635,9 +687,14 @@ function render(options = {}) {
   else if (state.route === 'compare') content = compareView();
   else if (state.route === 'boat') content = boatDetail();
   else content = overview();
+  if (fleetMap) {
+    fleetMap.remove();
+    fleetMap = null;
+  }
   app.innerHTML = shell(content);
   document.title = pageTitle();
   bindEvents();
+  initFleetMap();
   if (focusId) {
     const replacement = document.getElementById(focusId);
     replacement?.focus({ preventScroll: true });
@@ -715,18 +772,6 @@ function bindEvents() {
     state.preset = 'custom';
     render();
   }));
-  app.querySelectorAll('[data-map-boats]').forEach((marker) => {
-    const selectMarker = () => {
-      state.mapBoatIds = marker.dataset.mapBoats.split(',').filter(Boolean);
-      state.mapRegion = 'all';
-      state.mapLabel = marker.dataset.mapLabel;
-      state.region = 'all';
-      state.preset = 'custom';
-      render();
-    };
-    marker.addEventListener('click', selectMarker);
-    marker.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectMarker(); } });
-  });
   app.querySelectorAll('[data-clear-map]').forEach((button) => button.addEventListener('click', () => {
     state.mapBoatIds = null;
     state.mapRegion = 'all';
