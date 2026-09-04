@@ -9,13 +9,18 @@
     "data/boats/boats-06.json",
     "data/boats/boats-07.json",
     "data/boats/boats-08.json",
-    "data/boats/boats-09.json"
+    "data/boats/boats-09.json",
+    "data/boats/boats-10.json",
+    "data/boats/boats-11.json"
   ],
   "conversations": [
     "data/conversations/conversations-01.json",
     "data/conversations/conversations-02.json",
     "data/conversations/conversations-03.json",
-    "data/conversations/conversations-04.json"
+    "data/conversations/conversations-04.json",
+    "data/conversations/conversations-05.json",
+    "data/conversations/conversations-06.json"
   ],
+  "enrichment": "data/enrichment/top-boats.json",
   "manifest": "data/manifest.json"
 }

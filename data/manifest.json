@@ -1,8 +1,9 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-09-03T22:34:34-07:00",
+  "generated_at": "2026-09-04T15:56:29-07:00",
   "canonical_store": "GitHub repository data/*.json",
-  "boats": 62,
-  "conversation_events": 35,
-  "notes": "Google Sheets retired. Full 62-boat canonical-data audit completed Sep 3 evening; Gmail re-reconciled through 20:55 PT. Schema v2 adds listing-date provenance, precision, confidence, and historical market-end dates for every boat. The dashboard calculates days on market at runtime and stops closed comps at their recorded market-end date. Research distinguishes six verified dates, 41 earliest-public-evidence dates, 14 month-level estimates, and one unknown date where no vessel-specific public archive remains. All future changes remain committed directly to GitHub."
+  "boats": 67,
+  "conversation_events": 49,
+  "enriched_top_boats": 22,
+  "notes": "Google Sheets retired. Sep 4 afternoon Gmail reconciliation is current through approximately 3:56 PM PT. Added Monaco Blue and Captiva as canonical boat records; logged five new broker replies; updated Palermo for the competing option through Sep 10 / Sep 11 inspection, ANAVAH for its in-person-showing repair-record gate, MAC LERIC for pending vessel-specific engine answers, and Spartan for the hard-bounced MVI outreach plus verified YachtSite owner-contact fallback. Gmail reply drafts are queued for Monaco Blue, Captiva and Palermo; no emails were sent. ANAVAH is now explicitly a Max travel/showing decision and MAC LERIC requires no response while the broker gathers mechanical evidence. Existing dashboard waiting/diligence/max-decision states already support these cases, so no new UI schema or code was required. All future changes remain committed directly to GitHub."
 }
